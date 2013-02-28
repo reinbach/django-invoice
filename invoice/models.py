@@ -1,20 +1,21 @@
+
 from datetime import date
 from decimal import Decimal
 from StringIO import StringIO
 from email.mime.application import MIMEApplication
 
 from django.db import models
-from django.contrib.auth.models import User
 from django.conf import settings
-from django_extensions.db.models import TimeStampedModel
-from django.template.loader import render_to_string
-from django.http import HttpResponse
+from django.utils.translation import ugettext as _
 from django.core.mail import EmailMessage
 
-from addressbook.models import Address
-from .utils import format_currency, friendly_id
-from .conf import settings as app_settings
-from .pdf import draw_pdf
+from invoice.utils import format_currency, friendly_id, load_class
+from invoice.pdf import draw_pdf
+
+
+Address = load_class(getattr(settings, 'INVOICE_ADDRESS_MODEL', 'invoice.modelbases.Address'))
+
+USER_CLASS = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
 
 
 class InvoiceManager(models.Manager):
@@ -27,15 +28,18 @@ class InvoiceManager(models.Manager):
                            draft=False)
 
 
-class Invoice(TimeStampedModel):
-    user = models.ForeignKey(User)
+class Invoice(models.Model):
+    user = models.ForeignKey(USER_CLASS, null=True)
     address = models.ForeignKey(Address, related_name='%(class)s_set')
     invoice_id = models.CharField(unique=True, max_length=6,
-        null=True, blank=True, editable=False)
+                                  null=True, blank=True, editable=False)
     invoice_date = models.DateField(default=date.today)
     invoiced = models.BooleanField(default=False)
     draft = models.BooleanField(default=False)
     paid_date = models.DateField(blank=True, null=True)
+
+    created = models.DateTimeField(auto_now_add=True, verbose_name=_('Date added'))
+    modified = models.DateTimeField(auto_now=True, verbose_name=_('Last modified'))
 
     objects = InvoiceManager()
 
@@ -46,14 +50,6 @@ class Invoice(TimeStampedModel):
         ordering = ('-invoice_date', 'id')
 
     def save(self, *args, **kwargs):
-        try:
-            self.address
-        except Address.DoesNotExist:
-            try:
-                self.address = self.user.get_profile().address
-            except User.DoesNotExist:
-                pass
-
         super(Invoice, self).save(*args, **kwargs)
 
         if not self.invoice_id:
@@ -73,25 +69,16 @@ class Invoice(TimeStampedModel):
     def file_name(self):
         return u'Invoice %s.pdf' % self.invoice_id
 
-    def send_invoice(self):
+    def send_invoice(self, subject="Invoice", text=""):
         pdf = StringIO()
         draw_pdf(pdf, self)
         pdf.seek(0)
 
         attachment = MIMEApplication(pdf.read())
-        attachment.add_header("Content-Disposition", "attachment",
-            filename=self.file_name())
+        attachment.add_header("Content-Disposition", "attachment", filename=self.file_name())
         pdf.close()
 
-        subject = app_settings.INV_EMAIL_SUBJECT % {"invoice_id": self.invoice_id}
-        email = EmailMessage(subject=subject, to=[self.user.email])
-        email.body = render_to_string("invoice/invoice_email.txt", {
-            "invoice": self,
-            "SITE_NAME": settings.SITE_NAME,
-            "INV_CURRENCY": app_settings.INV_CURRENCY,
-            "INV_CURRENCY_SYMBOL": app_settings.INV_CURRENCY_SYMBOL,
-            "SUPPORT_EMAIL": settings.MANAGERS[0][1],
-        })
+        email = EmailMessage(subject=subject, body=text, to=[self.user.email])
         email.attach(attachment)
         email.send()
 

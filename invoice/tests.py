@@ -1,11 +1,16 @@
 import datetime
+from io import FileIO
 
 from django.test import TestCase
-from django.contrib.auth.models import User
-from addressbook.models import Address, Country
 
-from .models import Invoice
-from .conf import settings
+try:
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+except:
+    from django.contrib.auth.models import User
+
+from invoice.models import Invoice, Address
+from invoice.pdf import draw_pdf
 
 
 class InvoiceTestCase(TestCase):
@@ -15,12 +20,11 @@ class InvoiceTestCase(TestCase):
                                   last_name='Doe',
                                   email='example@example.com')
 
-        country = Country.objects.get(pk=1)
         address = Address.objects.create(contact_name='John Doe',
                                          address_one='Street',
                                          town='Town',
                                          postcode='PostCode',
-                                         country=country)
+                                         country="Country")
 
         self.inv = Invoice.objects.create(user=usr, address=address)
 
@@ -61,3 +65,8 @@ class InvoiceTestCase(TestCase):
         inv.save()
         self.assertEquals(len(Invoice.objects.get_due()), 0)
 
+    def test_generate_pdf(self):
+        filename = "/tmp/invoice.pdf"
+        fileio = FileIO(filename, "w")
+        draw_pdf(fileio, self.inv)
+        fileio.close()

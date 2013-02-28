@@ -1,6 +1,4 @@
-from distutils.core import setup
-
-PACKAGE_NAME = 'django-invoice'
+from setuptools import setup
 
 # Dynamically calculate the version
 version_tuple = __import__('invoice').VERSION
@@ -12,16 +10,15 @@ else:
 setup(
     author = 'Simon Luijk',
     author_email = 'simon@simonluijk.com',
-    name = PACKAGE_NAME,
+    name = "django-invoice",
     version = version,
     description = 'Django invoicing app',
-    url = 'http://pypi.python.org/pypi/%s/' % PACKAGE_NAME,
-    packages = [
+    url = 'http://pypi.python.org/pypi/django-invoice/',
+    modules = [
         'invoice',
         'invoice.management',
         'invoice.management.commands',
         'invoice.utils',
-        'invoice.conf',
     ],
     classifiers = [
         'Development Status :: 4 - Beta',

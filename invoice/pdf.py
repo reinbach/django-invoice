@@ -8,7 +8,6 @@ try:
 except ImportError:
     import importlib
 
-from invoice.conf import settings
 from invoice.utils import format_currency
 
 
@@ -18,7 +17,7 @@ def draw_header(canvas):
     canvas.setFillColorRGB(0.2, 0.2, 0.2)
     canvas.setFont('Helvetica', 16)
     canvas.drawString(18*cm, -1*cm, 'Invoice')
-    canvas.drawInlineImage(settings.INV_LOGO, 1*cm, -1*cm, 250, 16)
+    # canvas.drawInlineImage(settings.INV_LOGO, 1*cm, -1*cm, 250, 16)
     canvas.setLineWidth(4)
     canvas.line(0, -1.25*cm, 21.7*cm, -1.25*cm)
 
@@ -57,10 +56,10 @@ def draw_footer(canvas):
         textobject.textLine(line)
     canvas.drawText(textobject)
 
-inv_module = importlib.import_module(settings.INV_MODULE)
-header_func = inv_module.draw_header
-address_func = inv_module.draw_address
-footer_func = inv_module.draw_footer
+# inv_module = importlib.import_module(settings.INV_MODULE)
+header_func = draw_header
+address_func = draw_address
+footer_func = draw_footer
 
 
 def draw_pdf(buffer, invoice):
@@ -89,10 +88,10 @@ def draw_pdf(buffer, invoice):
     if invoice.address.address_two:
         textobject.textLine(invoice.address.address_two)
     textobject.textLine(invoice.address.town)
-    if invoice.address.county:
-        textobject.textLine(invoice.address.county)
+    if invoice.address.country:
+        textobject.textLine(invoice.address.country)
     textobject.textLine(invoice.address.postcode)
-    textobject.textLine(invoice.address.country.name)
+    textobject.textLine(invoice.address.country)
     canvas.drawText(textobject)
 
     # Info

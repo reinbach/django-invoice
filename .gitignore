@@ -1,0 +1,3 @@
+*.pyc
+*.tmp
+django_invoice.egg-info/
