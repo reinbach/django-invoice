@@ -1,61 +1,101 @@
-
+# coding: utf-8
+import os
+from io import FileIO, BytesIO
 from datetime import date
 from decimal import Decimal
-from StringIO import StringIO
 from email.mime.application import MIMEApplication
 
 from django.db import models
 from django.conf import settings
+from django.http.response import HttpResponse
+from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext as _
-from django.core.mail import EmailMessage
 
-from invoice.utils import format_currency, friendly_id, load_class
-from invoice.pdf import draw_pdf
-
+from invoice.utils import format_currency, friendly_id, load_class, model_to_dict
+from invoice.pdf import BasicPdfExporter
 
 Address = load_class(getattr(settings, 'INVOICE_ADDRESS_MODEL', 'invoice.modelbases.Address'))
+BankAccount = load_class(getattr(settings, 'INVOICE_BANK_ACCOUNT_MODEL', 'invoice.modelbases.BankAccount'))
 
-USER_CLASS = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
+
+@python_2_unicode_compatible
+class InvoiceSettings(models.Model):
+    SECTIONS = (
+        ('header', _("Header")),
+        ('contractor', _("Contractor")),
+        ('subscriber', _("Subscriber")),
+        ('itemlist', _("Item list")),
+        ('footer', _("Footer")),
+    )
+    STYLE_CHOICES = (
+        ('bold', _("Bold")),
+        ('italic', _("Italic")),
+    )
+
+    section = models.CharField(max_length=20, choices=SECTIONS)
+    template = models.TextField()
+    foreground = models.CharField(max_length=6, null=True, blank=True)
+    background = models.CharField(max_length=6, null=True, blank=True)
+    font_size = models.PositiveSmallIntegerField(default=12)
+    font_style = models.CharField(max_length=10, choices=STYLE_CHOICES)
+
+    def __str__(self):
+        return self.section
 
 
 class InvoiceManager(models.Manager):
-    def get_invoiced(self):
-        return self.filter(invoiced=True, draft=False)
 
     def get_due(self):
-        return self.filter(invoice_date__lte=date.today(),
-                           invoiced=False,
-                           draft=False)
+        return (self.get_query_set()
+                    .filter(invoice_date__lte=date.today())
+                    .filter(state=Invoice.STATE_PROFORMA)
+                )
 
 
+@python_2_unicode_compatible
 class Invoice(models.Model):
-    user = models.ForeignKey(USER_CLASS, null=True)
-    address = models.ForeignKey(Address, related_name='%(class)s_set')
-    invoice_id = models.CharField(unique=True, max_length=6,
-                                  null=True, blank=True, editable=False)
+    STATE_PROFORMA = 'proforma'
+    STATE_INVOICE = 'invoice'
+    INVOICE_STATES = (
+        (STATE_PROFORMA, _("Proforma")),
+        (STATE_INVOICE, _("Invoice")),
+    )
+
+    uid = models.CharField(unique=True, max_length=6, blank=True, editable=False)
+    contractor = models.ForeignKey(Address)
+    subscriber = models.ForeignKey(Address)
+    subscriber_shipping = models.ForeignKey(Address, related_name='+', db_index=False,
+                                            null=True, blank=True)
+    subscriber_bank = models.ForeignKey(BankAccount, related_name='+', db_index=False,
+                                        null=True, blank=True)
+
+    state = models.CharField(max_length=15, choices=INVOICE_STATES, default=STATE_PROFORMA)
     invoice_date = models.DateField(default=date.today)
-    invoiced = models.BooleanField(default=False)
-    draft = models.BooleanField(default=False)
     paid_date = models.DateField(blank=True, null=True)
 
     created = models.DateTimeField(auto_now_add=True, verbose_name=_('Date added'))
     modified = models.DateTimeField(auto_now=True, verbose_name=_('Last modified'))
 
     objects = InvoiceManager()
+    exporter = BasicPdfExporter()
 
-    def __unicode__(self):
-        return u'%s (%s)' % (self.invoice_id, self.total_amount())
+    def __str__(self):
+        return u'%s (%s)' % (self.uid, self.total_amount())
 
     class Meta:
-        ordering = ('-invoice_date', 'id')
+        ordering = ('-invoice_date', 'uid')
 
     def save(self, *args, **kwargs):
         super(Invoice, self).save(*args, **kwargs)
-
-        if not self.invoice_id:
-            self.invoice_id = friendly_id.encode(self.pk)
+        if not self.uid:
+            self.uid = friendly_id.encode(self.pk)
             kwargs['force_insert'] = False
             super(Invoice, self).save(*args, **kwargs)
+
+    def set_paid(self):
+        self.paid_date = date.today()
+        self.state = self.STATE_INVOICE
+        self.save()
 
     def total_amount(self):
         return format_currency(self.total())
@@ -66,24 +106,32 @@ class Invoice(models.Model):
             total = total + item.total()
         return total
 
-    def file_name(self):
-        return u'Invoice %s.pdf' % self.invoice_id
+    def get_filename(self):
+        return _('Invoice-{uid}.pdf').format(**model_to_dict(self))
 
-    def send_invoice(self, subject="Invoice", text=""):
-        pdf = StringIO()
-        draw_pdf(pdf, self)
-        pdf.seek(0)
+    def export_file(self, basedir):
+        filename = os.path.join(basedir, self.get_filename())
+        fileio = FileIO(filename, "w")
+        self.exporter.draw(self, fileio)
+        fileio.close()
 
-        attachment = MIMEApplication(pdf.read())
-        attachment.add_header("Content-Disposition", "attachment", filename=self.file_name())
-        pdf.close()
+    def export_bytes(self):
+        stream = BytesIO()
+        self.exporter.draw(self, stream)
+        output = stream.get_value()
+        stream.close()
+        return output
 
-        email = EmailMessage(subject=subject, body=text, to=[self.user.email])
-        email.attach(attachment)
-        email.send()
+    def export_attachment(self):
+        attachment = MIMEApplication(self.export_bytes())
+        attachment.add_header("Content-Disposition", "attachment", filename=self.get_filename())
+        return attachment
 
-        self.invoiced = True
-        self.save()
+    def export_response(self):
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="{0}"'.format(self.get_filename())
+        response.write(self.export_bytes)
+        return response
 
 
 class InvoiceItem(models.Model):

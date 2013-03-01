@@ -1,5 +1,5 @@
+from django.db import models
 from django.core import exceptions
-from django.http import HttpResponse
 from django.utils.importlib import import_module
 
 
@@ -8,20 +8,6 @@ def format_currency(amount):
     # return u"%s %.2f %s" % (
     #     settings.INV_CURRENCY_SYMBOL, amount, settings.INV_CURRENCY
     # )
-
-
-def pdf_response(draw_funk, file_name, *args, **kwargs):
-    response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = "attachment; filename=\"%s\"" % file_name
-    draw_funk(response, *args, **kwargs)
-    return response
-
-
-def send_invoices():
-    from ..models import Invoice
-
-    for invoice in Invoice.objects.get_due():
-        invoice.send_email()
 
 
 def load_class(class_path, setting_name=None):
@@ -63,3 +49,14 @@ def load_class(class_path, setting_name=None):
                 class_module, class_name)
         raise exceptions.ImproperlyConfigured(txt)
     return clazz
+
+
+def model_to_dict(instance, exclude=()):
+    data = {}
+    for f in instance._meta.fields:
+        if exclude and f.name in exclude:
+            continue
+        if isinstance(f, models.ManyToManyField):
+            continue
+        data[f.name] = f.value_from_object(instance)
+    return data

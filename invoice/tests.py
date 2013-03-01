@@ -1,72 +1,56 @@
 import datetime
-from io import FileIO
 
 from django.test import TestCase
 
-try:
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-except:
-    from django.contrib.auth.models import User
-
 from invoice.models import Invoice, Address
-from invoice.pdf import draw_pdf
+# from invoice.utils import InvoicePdfExport
 
 
 class InvoiceTestCase(TestCase):
     def setUp(self):
-        usr = User.objects.create(username='test',
-                                  first_name='John',
-                                  last_name='Doe',
-                                  email='example@example.com')
+        contractor = Address.objects.create(name='John Doe',
+                                            street='Street',
+                                            town='Town',
+                                            postcode='PostCode',
+                                            country="Country",
+                                            business_id="523489473",
+                                            tax_id="CZ092748793")
 
-        address = Address.objects.create(contact_name='John Doe',
-                                         address_one='Street',
-                                         town='Town',
-                                         postcode='PostCode',
-                                         country="Country")
+        subscriber = Address.objects.create(name='John Doe',
+                                            street='Street',
+                                            town='Town',
+                                            postcode='PostCode',
+                                            country="Country")
 
-        self.inv = Invoice.objects.create(user=usr, address=address)
+        self.invoice = Invoice.objects.create(contractor=contractor, subscriber=subscriber)
 
-    def testInvoiceId(self):
-        inv = self.inv
-        self.assertEquals(inv.invoice_id, u'TTH9R')
+    def testInvoiceUID(self):
+        self.assertEquals(self.invoice.uid, u'TTH9R')
 
-        inv.invoice_id = False
-        inv.save()
+        self.invoice.uid = False
+        self.invoice.save()
 
-        self.assertEquals(inv.invoice_id, u'TTH9R')
+        self.assertEquals(self.invoice.uid, u'TTH9R')
 
     def testGetDue(self):
-        inv = self.inv
+        self.assertEquals(Invoice.objects.get_due().count(), 1)
 
-        inv.draft = True
-        inv.save()
-        self.assertEquals(len(Invoice.objects.get_due()), 0)
-
-        inv.draft = False
-        inv.save()
-        self.assertEquals(len(Invoice.objects.get_due()), 1)
-
-        inv.invoiced = True
-        inv.save()
-        self.assertEquals(len(Invoice.objects.get_due()), 0)
+        self.invoice.set_paid()
+        self.assertEquals(Invoice.objects.get_due().count(), 0)
 
         today = datetime.date.today()
-        yesterday = today - datetime.timedelta(1)
-        tomorrow = today + datetime.timedelta(1)
+        yesterday = today - datetime.timedelta(days=1)
+        tomorrow = today + datetime.timedelta(days=1)
 
-        inv.invoiced = False
-        inv.invoice_date = yesterday
-        inv.save()
-        self.assertEquals(len(Invoice.objects.get_due()), 1)
+        self.invoice.state = Invoice.STATE_PROFORMA
+        self.invoice.invoice_date = yesterday
+        self.invoice.save()
+        self.assertEquals(Invoice.objects.get_due().count(), 1)
 
-        inv.invoice_date = tomorrow
-        inv.save()
-        self.assertEquals(len(Invoice.objects.get_due()), 0)
+        self.invoice.invoice_date = tomorrow
+        self.invoice.save()
+        self.assertEquals(Invoice.objects.get_due().count(), 0)
 
     def test_generate_pdf(self):
-        filename = "/tmp/invoice.pdf"
-        fileio = FileIO(filename, "w")
-        draw_pdf(fileio, self.inv)
-        fileio.close()
+        basedir = "/tmp"
+        self.invoice.export_file(basedir)
