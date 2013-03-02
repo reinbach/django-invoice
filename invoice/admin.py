@@ -11,13 +11,13 @@ class InvoiceItemInline(admin.TabularInline):
 
 class InvoiceAdmin(admin.ModelAdmin):
     inlines = [InvoiceItemInline, ]
-    search_fields = ('invoice_id', )
+    search_fields = ('uid', )
     list_display = (
         'uid',
         'state',
         'total_amount',
-        'invoice_date',
-        'paid_date',
+        'date_issuance',
+        'date_paid',
     )
     form = InvoiceAdminForm
 

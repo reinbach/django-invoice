@@ -25,11 +25,11 @@ class Address(models.Model):
         self_dict = model_to_dict(self)
         base = (u"{name}\n"
                 u"{street}\n"
-                u"{town} {postcode}".format(**self_dict))
+                u"{postcode} {town}".format(**self_dict))
 
         if self.business_id:
-            business_info = u"{0}: {1}".format(_("Business id"), self.business_id)
-            tax_info = u"{0}: {1}".format(_("Tax id"), self.tax_id)
+            business_info = u"{0}: {1}".format(_("Reg No"), self.business_id)
+            tax_info = u"{0}: {1}".format(_("Tax No"), self.tax_id)
             base = u"\n".join((base, business_info, tax_info))
 
         if self.extra:

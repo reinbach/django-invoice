@@ -1,7 +1,7 @@
 # coding: utf-8
 import os
 from io import FileIO, BytesIO
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from email.mime.application import MIMEApplication
 
@@ -12,7 +12,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext as _
 
 from invoice.utils import format_currency, friendly_id, load_class, model_to_dict
-from invoice.pdf import BasicPdfExporter
+from invoice.export import PdfExport
 
 Address = load_class(getattr(settings, 'INVOICE_ADDRESS_MODEL', 'invoice.modelbases.Address'))
 BankAccount = load_class(getattr(settings, 'INVOICE_BANK_ACCOUNT_MODEL', 'invoice.modelbases.BankAccount'))
@@ -47,7 +47,7 @@ class InvoiceManager(models.Manager):
 
     def get_due(self):
         return (self.get_query_set()
-                    .filter(invoice_date__lte=date.today())
+                    .filter(date_issuance__lte=date.today())
                     .filter(state=Invoice.STATE_PROFORMA)
                 )
 
@@ -62,28 +62,31 @@ class Invoice(models.Model):
     )
 
     uid = models.CharField(unique=True, max_length=6, blank=True, editable=False)
-    contractor = models.ForeignKey(Address)
-    subscriber = models.ForeignKey(Address)
-    subscriber_shipping = models.ForeignKey(Address, related_name='+', db_index=False,
-                                            null=True, blank=True)
-    subscriber_bank = models.ForeignKey(BankAccount, related_name='+', db_index=False,
+    contractor = models.ForeignKey(Address, related_name='+')
+    contractor_bank = models.ForeignKey(BankAccount, related_name='+', db_index=False,
                                         null=True, blank=True)
 
+    subscriber = models.ForeignKey(Address, related_name='+')
+    subscriber_shipping = models.ForeignKey(Address, related_name='+', db_index=False,
+                                            null=True, blank=True)
+    logo = models.FilePathField(match=".*(png|jpg|jpeg|svg)", null=True, blank=True)
     state = models.CharField(max_length=15, choices=INVOICE_STATES, default=STATE_PROFORMA)
-    invoice_date = models.DateField(default=date.today)
-    paid_date = models.DateField(blank=True, null=True)
+
+    date_issuance = models.DateField(default=date.today)
+    date_due = models.DateField(default=lambda: date.today() + timedelta(days=14))
+    date_paid = models.DateField(blank=True, null=True)
 
     created = models.DateTimeField(auto_now_add=True, verbose_name=_('Date added'))
     modified = models.DateTimeField(auto_now=True, verbose_name=_('Last modified'))
 
     objects = InvoiceManager()
-    exporter = BasicPdfExporter()
+    export = PdfExport()
 
     def __str__(self):
         return u'%s (%s)' % (self.uid, self.total_amount())
 
     class Meta:
-        ordering = ('-invoice_date', 'uid')
+        ordering = ('-date_issuance', 'uid')
 
     def save(self, *args, **kwargs):
         super(Invoice, self).save(*args, **kwargs)
@@ -93,7 +96,7 @@ class Invoice(models.Model):
             super(Invoice, self).save(*args, **kwargs)
 
     def set_paid(self):
-        self.paid_date = date.today()
+        self.date_paid = date.today()
         self.state = self.STATE_INVOICE
         self.save()
 
@@ -112,12 +115,12 @@ class Invoice(models.Model):
     def export_file(self, basedir):
         filename = os.path.join(basedir, self.get_filename())
         fileio = FileIO(filename, "w")
-        self.exporter.draw(self, fileio)
+        self.export.draw(self, fileio)
         fileio.close()
 
     def export_bytes(self):
         stream = BytesIO()
-        self.exporter.draw(self, stream)
+        self.export.draw(self, stream)
         output = stream.get_value()
         stream.close()
         return output
@@ -128,7 +131,7 @@ class Invoice(models.Model):
         return attachment
 
     def export_response(self):
-        response = HttpResponse(content_type='application/pdf')
+        response = HttpResponse(content_type=self.export.get_content_type())
         response['Content-Disposition'] = 'attachment; filename="{0}"'.format(self.get_filename())
         response.write(self.export_bytes)
         return response
