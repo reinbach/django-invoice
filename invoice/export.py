@@ -11,7 +11,7 @@ from reportlab.lib.units import cm
 
 from django.utils.translation import ugettext as _
 
-from invoice.utils import format_currency
+from invoice.utils import format_currency, format_date
 
 STATIC_DIR = join(dirname(abspath(__file__)), "static", "invoice")
 
@@ -78,7 +78,7 @@ class PdfExport(Export):
         canvas.setFillColorRGB(0.2, 0.2, 0.2)
         canvas.setFont(self.FONT_NAME, 16)
         canvas.drawString(2*cm, -2*cm, u"{0} {1} {2}".format(_("Invoice"), _("Nr."), invoice.uid))
-        canvas.drawString((21-6)*cm, -2*cm, unicode(invoice.date_issuance))
+        canvas.drawString((21-6)*cm, -2*cm, format_date(invoice.date_issuance))
         canvas.setLineWidth(3)
         canvas.line(1.5*cm, -2.3*cm, (21 - 1.5)*cm, -2.3*cm)
 
@@ -116,8 +116,8 @@ class PdfExport(Export):
         canvas.line(1.5*cm, -8.3*cm, (21 - 1.5)*cm, -8.3*cm)
 
         textobject = canvas.beginText(1.5*cm, -9*cm)
-        textobject.textLine(u"{0}: {1}".format(_('Date issuance'), invoice.date_issuance.strftime('%d %b %Y')))
-        textobject.textLine(u"{0}: {1}".format(_('Due date'), invoice.date_due.strftime('%d %b %Y')))
+        textobject.textLine(u"{0}: {1}".format(_('Date issuance'), format_date(invoice.date_issuance)))
+        textobject.textLine(u"{0}: {1}".format(_('Due date'), format_date(invoice.date_due)))
         canvas.drawText(textobject)
 
         textobject = canvas.beginText(11.5*cm, -9*cm)

@@ -8,7 +8,7 @@ from email.mime.application import MIMEApplication
 from django.db import models
 from django.conf import settings
 from django.http.response import HttpResponse
-from django.template import Template, Context
+# from django.template import Template, Context
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext as _
 
@@ -121,6 +121,7 @@ class Invoice(models.Model):
         fileio = FileIO(filename, "w")
         self.export.draw(self, fileio)
         fileio.close()
+        return filename
 
     def export_bytes(self):
         stream = BytesIO()

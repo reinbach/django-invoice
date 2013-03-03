@@ -5,7 +5,7 @@ from invoice.models import Invoice, Address, BankAccount
 
 def load():
     contractor, created = (Address.objects
-                                  .get_or_create(name='John Contractor',
+                                  .get_or_create(name='Simon Luijk',
                                                  street=u'Rydsvägen 242',
                                                  town=u'Linköping',
                                                  defaults=dict(
@@ -18,13 +18,13 @@ def load():
                                                  )))
 
     subscriber, created = (Address.objects
-                                  .get_or_create(name='John Subscriber',
-                                                 street=u'Vodičkova 25',
-                                                 town=u'Koně Řehtají',
+                                  .get_or_create(name=u'Tomáš Peterka',
+                                                 street=u'Zdislavická',
+                                                 town=u'Praha',
                                                  defaults=dict(
-                                                     postcode='110 00',
+                                                     postcode='142 00',
                                                      country=u"Czech Republic",
-                                                     extra="Email: john@subscriber.cz"
+                                                     extra="Email: atheiste@seznam.cz"
                                                  )
                                                  )
                            )

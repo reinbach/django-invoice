@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils.translation import ugettext as _
-from django.utils.encoding import python_2_unicode_compatible
+from django.utils.encoding import python_2_unicode_compatible, smart_text
 from invoice.utils import model_to_dict
 
 
@@ -51,3 +51,7 @@ class BankAccount(models.Model):
         if not self.prefix:
             return u"{0} / {1}".format(self.number, self.bank)
         return u"{0} - {1} / {2}".format(self.prefix, self.number, self.bank)
+
+    def as_text(self):
+        return smart_text(self)
+
