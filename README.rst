@@ -1,5 +1,4 @@
 :author: Tomas Peterka & Simon Luijk
-:title: Django-invoice
 
 Django Invoice
 ==============
@@ -11,13 +10,12 @@ The default export is into PDF. Model is fully configurable
 The exporter to PDF is open for extension. The current look of an exported invoice you
 can see below. The tests generates one anyway, so you can  try on your own.
 
-The model provides custom Address model via setting `INVOICE_ADDRESS_MODEL` and custom
-Bank Account model via `INVOICE_BANK_ACCOUNT_MODEL`. The only rule for custom model
-is that it has to have a method `as_text` which returns unicode string where newline
-separators are `\n`. The string will be rendered as contractor resp. subscriber.
-
-The Invoice model has optional BankAccount foreign key which has the same rules as 
-Address model. It will be rendered below contractor information.
+The model provides an option to use your own Address model via setting `INVOICE_ADDRESS_MODEL`
+and Bank Account model via `INVOICE_BANK_ACCOUNT_MODEL`. Both settings the has to be a string
+with full class name (e.g. "myproject.core.models.CompanyInformation").
+The only rule for custom models is that it has to have a method `as_text` which returns unicode string with newline separators `\n`.
+Addresses will be used as contractor and subscriber. If BankAccount reference is presented, then it
+will be rendered below contractor information.
 
 The invoice is intended to be referenced via foreign key from another model which handles
 access policy and payments. These mechanisms are not provided in this app in favor for its
@@ -39,9 +37,9 @@ Invoice has some interesting methods:
 
 Here we provide an example invoice generated from test
 
-.. image:: example.jpeg
+.. image:: example.png
     :align: right
-    :class: right
+    :class: float-right
 
 
 
