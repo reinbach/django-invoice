@@ -8,6 +8,7 @@ from email.mime.application import MIMEApplication
 from django.db import models
 from django.conf import settings
 from django.http.response import HttpResponse
+from django.template import Template, Context
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext as _
 
@@ -18,29 +19,32 @@ Address = load_class(getattr(settings, 'INVOICE_ADDRESS_MODEL', 'invoice.modelba
 BankAccount = load_class(getattr(settings, 'INVOICE_BANK_ACCOUNT_MODEL', 'invoice.modelbases.BankAccount'))
 
 
-@python_2_unicode_compatible
-class InvoiceSettings(models.Model):
-    SECTIONS = (
-        ('header', _("Header")),
-        ('contractor', _("Contractor")),
-        ('subscriber', _("Subscriber")),
-        ('itemlist', _("Item list")),
-        ('footer', _("Footer")),
-    )
-    STYLE_CHOICES = (
-        ('bold', _("Bold")),
-        ('italic', _("Italic")),
-    )
+# @python_2_unicode_compatible
+# class InvoiceSettings(models.Model):
+#     SECTIONS = (
+#         ('header', _("Header")),
+#         ('contractor', _("Contractor")),
+#         ('subscriber', _("Subscriber")),
+#         ('itemlist', _("Item list")),
+#         ('footer', _("Footer")),
+#     )
+#     STYLE_CHOICES = (
+#         ('bold', _("Bold")),
+#         ('italic', _("Italic")),
+#     )
 
-    section = models.CharField(max_length=20, choices=SECTIONS)
-    template = models.TextField()
-    foreground = models.CharField(max_length=6, null=True, blank=True)
-    background = models.CharField(max_length=6, null=True, blank=True)
-    font_size = models.PositiveSmallIntegerField(default=12)
-    font_style = models.CharField(max_length=10, choices=STYLE_CHOICES)
+#     section = models.CharField(max_length=20, choices=SECTIONS)
+#     template = models.TextField()
+#     foreground = models.CharField(max_length=6, null=True, blank=True)
+#     background = models.CharField(max_length=6, null=True, blank=True)
+#     font_size = models.PositiveSmallIntegerField(default=12)
+#     font_style = models.CharField(max_length=10, choices=STYLE_CHOICES)
 
-    def __str__(self):
-        return self.section
+#     def __str__(self):
+#         return self.section
+
+#     def render_text(self, context):
+#         return Template(self.template).render(Context(context))
 
 
 class InvoiceManager(models.Manager):

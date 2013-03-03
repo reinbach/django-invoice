@@ -19,8 +19,8 @@ def load():
 
     subscriber, created = (Address.objects
                                   .get_or_create(name='John Subscriber',
-                                                 street=u'Vodičkova',
-                                                 town='Prague',
+                                                 street=u'Vodičkova 25',
+                                                 town=u'Koně Řehtají',
                                                  defaults=dict(
                                                      postcode='110 00',
                                                      country=u"Czech Republic",
