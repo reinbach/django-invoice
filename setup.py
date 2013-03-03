@@ -1,7 +1,7 @@
 from setuptools import setup
 
 APP_NAME = "django-invoice"
-VERSION = 0.2
+VERSION = 0.3
 
 setup(
     author='Tomas Peterka',

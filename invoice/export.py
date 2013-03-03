@@ -10,6 +10,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 
 from django.utils.translation import ugettext as _
+from django.utils.encoding import smart_text
 
 from invoice.utils import format_currency, format_date
 
@@ -43,6 +44,10 @@ class PdfExport(Export):
         self.baseline = -2*cm
 
         canvas = Canvas(stream, pagesize=A4)
+        canvas.setCreator("django-invoice")
+        canvas.setAuthor(smart_text(invoice.contractor))
+        canvas.setTitle(smart_text(invoice))
+
         canvas.translate(0, 29.7*cm)
         canvas.setFont(self.FONT_NAME, 10)
 
@@ -80,7 +85,7 @@ class PdfExport(Export):
         canvas.setStrokeColorRGB(0.9, 0.5, 0.2)
         canvas.setFillColorRGB(0.2, 0.2, 0.2)
         canvas.setFont(self.FONT_NAME, 16)
-        canvas.drawString(2*cm, self.baseline, u"{0} {1} {2}".format(_("Invoice"), _("Nr."), invoice.uid))
+        canvas.drawString(2*cm, self.baseline, smart_text(invoice))
         canvas.drawString((21-6)*cm, self.baseline, format_date(invoice.date_issuance))
         canvas.setLineWidth(3)
         self.baseline -= 0.3*cm
@@ -137,7 +142,7 @@ class PdfExport(Export):
         self.baseline -= 1.5*cm
         if invoice.get_settings():
             lines = 0
-            canvas.setFont(self.FONT_NAME, 9)
+            canvas.setFontSize(9)
             textobject = canvas.beginText(1.5*cm, self.baseline)
             for line in invoice.get_settings().info({"invoice": invoice}).split("\n"):
                 lines += 1

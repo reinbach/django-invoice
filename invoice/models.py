@@ -9,7 +9,7 @@ from django.db import models
 from django.conf import settings
 from django.http.response import HttpResponse
 from django.template import Template, Context
-from django.utils.encoding import python_2_unicode_compatible
+from django.utils.encoding import python_2_unicode_compatible, smart_text
 from django.utils.translation import ugettext as _
 
 from invoice.utils import format_currency, friendly_id, load_class, model_to_dict
@@ -83,7 +83,7 @@ class Invoice(models.Model):
     export = PdfExport()
 
     def __str__(self):
-        return u'%s (%s)' % (self.uid, self.total_amount())
+        return smart_text("{0} {1} {2}").format(_("Invoice"), _("Nr."), self.uid)
 
     class Meta:
         ordering = ('-date_issuance', 'uid')
