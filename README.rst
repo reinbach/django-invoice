@@ -6,15 +6,14 @@ Django Invoice
 General purpose invoicing app.
 
 This app provides simple (but sufficient) Invoice model with export abilities.
-The default export is into PDF. Model is fully configurable 
-The exporter to PDF is open for extension. The current look of an exported invoice you
-can see below. The tests generates one anyway, so you can  try on your own.
+The default export is into PDF but it's easy to write and use your own. The app is 
+python 3 comptibilite, has full unicode fonts and ability to use company logo.
 
 The model provides an option to use your own Address model via setting `INVOICE_ADDRESS_MODEL`
 and Bank Account model via `INVOICE_BANK_ACCOUNT_MODEL`. Both settings the has to be a string
 with full class name (e.g. "myproject.core.models.CompanyInformation").
-The only rule for custom models is that it has to have a method `as_text` which returns unicode string with newline separators `\n`.
-Addresses will be used as contractor and subscriber. 
+The only rule for custom models is that it has to have a method `as_text` which returns unicode 
+string with newline separators `\n`. Addresses will be used as contractor and subscriber. 
 
 If BankAccount reference is presented, then it will be rendered below contractor information. Bellow bank
 account information will be rendered *Variable symbol: {{ invoice.uid }}*. Please make sure that
@@ -61,7 +60,7 @@ and then simply use it within Invoice ::
     order.invoice.export = MyExporter()
 
     email = EmailMessage(to=[email, ], subject="Invoice", text="Hello")
-    email.atttach(order.invoice.export_attachment())
+    email.attach(order.invoice.export_attachment())
     email.send()
 
 
