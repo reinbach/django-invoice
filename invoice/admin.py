@@ -1,8 +1,5 @@
 from django.contrib import admin
-from django.conf.urls.defaults import patterns
-from invoice.models import Invoice, InvoiceItem
-from invoice.views import pdf_view
-from invoice.forms import InvoiceAdminForm
+from invoice.models import Invoice, InvoiceItem, InvoiceSettings
 
 
 class InvoiceItemInline(admin.TabularInline):
@@ -11,7 +8,7 @@ class InvoiceItemInline(admin.TabularInline):
 
 class InvoiceAdmin(admin.ModelAdmin):
     inlines = [InvoiceItemInline, ]
-    search_fields = ('uid', )
+    search_fields = ('uid', 'contractor__name', 'subscriber__name')
     list_display = (
         'uid',
         'state',
@@ -19,15 +16,11 @@ class InvoiceAdmin(admin.ModelAdmin):
         'date_issuance',
         'date_paid',
     )
-    form = InvoiceAdminForm
-
-    def get_urls(self):
-        urls = super(InvoiceAdmin, self).get_urls()
-        return patterns('',
-            (r'^(.+)/pdf/$', self.admin_site.admin_view(pdf_view))
-        ) + urls
-
-    send_invoice.short_description = "Send invoice to client"
 
 
+class InvoiceSettingsAdmin(admin.ModelAdmin):
+    list_display = ('name', 'id')
+    # action to generate example invoice
+
+admin.site.register(InvoiceSettings, InvoiceSettingsAdmin)
 admin.site.register(Invoice, InvoiceAdmin)
