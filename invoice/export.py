@@ -23,7 +23,7 @@ class Export(object):
         """Returns MIME string of generated format"""
         raise NotImplementedError('Call to abstract method get_content_type')
 
-    def draw(self, invoice, stream, settings=None):
+    def draw(self, invoice, stream):
         raise NotImplementedError('Call to abstract method draw')
 
 
@@ -34,11 +34,13 @@ class PdfExport(Export):
     def get_content_type(self):
         return u'application/pdf'
 
-    def draw(self, invoice, stream, settings=None):
+    def draw(self, invoice, stream):
         """ Draws the invoice """
         # embed unicode font
         pdfmetrics.registerFont(TTFont('FreeSans', join(STATIC_DIR, 'FreeSans.ttf')))
         addMapping('FreeSans', 0, 0, 'FreeSans')
+
+        self.baseline = -2*cm
 
         canvas = Canvas(stream, pagesize=A4)
         canvas.translate(0, 29.7*cm)
@@ -71,61 +73,77 @@ class PdfExport(Export):
         canvas.showPage()
         canvas.save()
         canvas = None
+        self.baseline = 0
 
     def draw_header(self, invoice, canvas):
         """ Draws the invoice header """
         canvas.setStrokeColorRGB(0.9, 0.5, 0.2)
         canvas.setFillColorRGB(0.2, 0.2, 0.2)
         canvas.setFont(self.FONT_NAME, 16)
-        canvas.drawString(2*cm, -2*cm, u"{0} {1} {2}".format(_("Invoice"), _("Nr."), invoice.uid))
-        canvas.drawString((21-6)*cm, -2*cm, format_date(invoice.date_issuance))
+        canvas.drawString(2*cm, self.baseline, u"{0} {1} {2}".format(_("Invoice"), _("Nr."), invoice.uid))
+        canvas.drawString((21-6)*cm, self.baseline, format_date(invoice.date_issuance))
         canvas.setLineWidth(3)
-        canvas.line(1.5*cm, -2.3*cm, (21 - 1.5)*cm, -2.3*cm)
+        self.baseline -= 0.3*cm
+        canvas.line(1.5*cm, self.baseline, (21 - 1.5)*cm, self.baseline)
+        self.baseline -= 1*cm
+
+    def draw_subscriber(self, invoice, canvas):
+        canvas.setFont(self.FONT_NAME, 13)
+        canvas.setFillColorRGB(0.5, 0.5, 0.5)
+        canvas.drawString(1.5*cm, self.baseline, _("The Subscriber"))
+
+        canvas.setFont(self.FONT_NAME, 11)
+        canvas.setFillColorRGB(0, 0, 0)
+        textobject = canvas.beginText(1.5*cm, self.baseline - .7*cm)
+        for line in invoice.subscriber.as_text().split("\n"):
+            textobject.textLine(line)
+        canvas.drawText(textobject)
 
     def draw_contractor(self, invoice, canvas):
         """ Draws the business address """
         canvas.setFont(self.FONT_NAME, 13)
         canvas.setFillColorRGB(0.5, 0.5, 0.5)
-        canvas.drawString(11.5*cm, -3.3*cm, _("The Contractor"))
+        canvas.drawString(11.5*cm, self.baseline, _("The Contractor"))
         if invoice.logo:
-            canvas.drawInlineImage(invoice.logo, (21-1.5-3)*cm, -5*cm, 2*cm, 2*cm, True)
+            canvas.drawInlineImage(invoice.logo, (21-1.5-3)*cm, self.baseline - 1.6*cm, 2*cm, 2*cm, True)
 
         canvas.setFont(self.FONT_NAME, 11)
         canvas.setFillColorRGB(0, 0, 0)
-        textobject = canvas.beginText(11.5*cm, -4*cm)
+        textobject = canvas.beginText(11.5*cm, self.baseline - .7*cm)
         for line in invoice.contractor.as_text().split("\n"):
             textobject.textLine(line)
         canvas.drawText(textobject)
-
-    def draw_subscriber(self, invoice, canvas):
-        canvas.setFont(self.FONT_NAME, 13)
-        canvas.setFillColorRGB(0.5, 0.5, 0.5)
-        canvas.drawString(1.5*cm, -3.3*cm, _("The Subscriber"))
-
-        canvas.setFont(self.FONT_NAME, 11)
-        canvas.setFillColorRGB(0, 0, 0)
-        textobject = canvas.beginText(1.5*cm, -4*cm)
-        for line in invoice.subscriber.as_text().split("\n"):
-            textobject.textLine(line)
-        canvas.drawText(textobject)
+        self.baseline = -8.3*cm
 
     def draw_info(self, invoice, canvas):
         # Informations between Contact and Items
         canvas.setStrokeColorRGB(0.9, 0.9, 0.9)
         canvas.setLineWidth(0.5)
-        canvas.line(1.5*cm, -8.3*cm, (21 - 1.5)*cm, -8.3*cm)
+        canvas.line(1.5*cm, self.baseline, (21 - 1.5)*cm, self.baseline)
 
-        textobject = canvas.beginText(1.5*cm, -9*cm)
+        self.baseline -= .7*cm
+        textobject = canvas.beginText(1.5*cm, self.baseline)
         textobject.textLine(u"{0}: {1}".format(_('Date issuance'), format_date(invoice.date_issuance)))
         textobject.textLine(u"{0}: {1}".format(_('Due date'), format_date(invoice.date_due)))
         canvas.drawText(textobject)
 
         if invoice.contractor_bank:
-            textobject = canvas.beginText(11.5*cm, -9*cm)
+            textobject = canvas.beginText(11.5*cm, self.baseline)
             for line in invoice.contractor_bank.as_text().split("\n"):
                 textobject.textLine(line)
             textobject.textLine(u"{0}: {1}".format(_('Variable symbol'), invoice.uid))
             canvas.drawText(textobject)
+
+        self.baseline -= 1.5*cm
+        if invoice.get_settings():
+            lines = 0
+            canvas.setFont(self.FONT_NAME, 9)
+            textobject = canvas.beginText(1.5*cm, self.baseline)
+            for line in invoice.get_settings().info({"invoice": invoice}).split("\n"):
+                lines += 1
+                textobject.textLine(line.strip())
+            canvas.drawText(textobject)
+            self.baseline -= lines * .5 * cm
 
     def draw_items(self, invoice, canvas):
         # Items
@@ -149,17 +167,13 @@ class PdfExport(Export):
             ('BACKGROUND', (0, 0), (-1, 0), (0.8, 0.8, 0.8)),
         ])
         tw, th, = table.wrapOn(canvas, 15*cm, 19*cm)
-        table.drawOn(canvas, 1.5*cm, -10.5*cm-th)
+        table.drawOn(canvas, 1.5*cm, self.baseline-th)
+        self.baseline = -26*cm
 
     def draw_footer(self, invoice, canvas):
         """ Draws the invoice footer """
-        note = (
-            u'Bank Details: Street address, Town, County, POSTCODE',
-            u'Sort Code: 00-00-00 Account No: 00000000 (Quote invoice number).',
-            u'Please pay via bank transfer or cheque. All payments should be made in CURRENCY.',
-            u'Make cheques payable to Company Name Ltd.',
-        )
-        textobject = canvas.beginText(1.5*cm, -27*cm)
-        for line in note:
-            textobject.textLine(line)
-        canvas.drawText(textobject)
+        if invoice.get_settings():
+            textobject = canvas.beginText(1.5*cm, self.baseline)
+            for line in invoice.get_settings().footer({"invoice": invoice}).split("\n"):
+                textobject.textLine(line.strip())
+            canvas.drawText(textobject)

@@ -8,7 +8,7 @@ from email.mime.application import MIMEApplication
 from django.db import models
 from django.conf import settings
 from django.http.response import HttpResponse
-# from django.template import Template, Context
+from django.template import Template, Context
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext as _
 
@@ -19,32 +19,28 @@ Address = load_class(getattr(settings, 'INVOICE_ADDRESS_MODEL', 'invoice.modelba
 BankAccount = load_class(getattr(settings, 'INVOICE_BANK_ACCOUNT_MODEL', 'invoice.modelbases.BankAccount'))
 
 
-# @python_2_unicode_compatible
-# class InvoiceSettings(models.Model):
-#     SECTIONS = (
-#         ('header', _("Header")),
-#         ('contractor', _("Contractor")),
-#         ('subscriber', _("Subscriber")),
-#         ('itemlist', _("Item list")),
-#         ('footer', _("Footer")),
-#     )
-#     STYLE_CHOICES = (
-#         ('bold', _("Bold")),
-#         ('italic', _("Italic")),
-#     )
+@python_2_unicode_compatible
+class InvoiceSettings(models.Model):
+    STYLE_CHOICES = (
+        ('bold', _("Bold")),
+        ('italic', _("Italic")),
+    )
+    name = models.CharField(max_length=20)
+    info_text = models.TextField()
+    footer_text = models.TextField()
+    line_color = models.PositiveSmallIntegerField(default=12)
 
-#     section = models.CharField(max_length=20, choices=SECTIONS)
-#     template = models.TextField()
-#     foreground = models.CharField(max_length=6, null=True, blank=True)
-#     background = models.CharField(max_length=6, null=True, blank=True)
-#     font_size = models.PositiveSmallIntegerField(default=12)
-#     font_style = models.CharField(max_length=10, choices=STYLE_CHOICES)
+    class Meta:
+        ordering = ['id', ]
 
-#     def __str__(self):
-#         return self.section
+    def __str__(self):
+        return self.name
 
-#     def render_text(self, context):
-#         return Template(self.template).render(Context(context))
+    def info(self, context):
+        return Template(self.info_text).render(Context(context))
+
+    def footer(self, context):
+        return Template(self.footer_text).render(Context(context))
 
 
 class InvoiceManager(models.Manager):
@@ -65,7 +61,7 @@ class Invoice(models.Model):
         (STATE_INVOICE, _("Invoice")),
     )
 
-    uid = models.CharField(unique=True, max_length=8, blank=True)
+    uid = models.CharField(unique=True, max_length=10, blank=True)
     contractor = models.ForeignKey(Address, related_name='+')
     contractor_bank = models.ForeignKey(BankAccount, related_name='+', db_index=False,
                                         null=True, blank=True)
@@ -116,6 +112,15 @@ class Invoice(models.Model):
     def get_filename(self):
         return _('Invoice-{uid}.pdf').format(**model_to_dict(self))
 
+    def get_settings(self):
+        # how to make it right?
+        if not hasattr(self, "settings"):
+            if InvoiceSettings.objects.count() >= 1:
+                setattr(self, "settings", InvoiceSettings.objects.all()[0])
+            else:
+                setattr(self, "settings", None)
+        return self.settings
+
     def export_file(self, basedir):
         filename = os.path.join(basedir, self.get_filename())
         fileio = FileIO(filename, "w")
@@ -123,22 +128,22 @@ class Invoice(models.Model):
         fileio.close()
         return filename
 
-    def export_bytes(self):
+    def export_bytes(self, settings=None):
         stream = BytesIO()
         self.export.draw(self, stream)
         output = stream.get_value()
         stream.close()
         return output
 
-    def export_attachment(self):
+    def export_attachment(self, settings=None):
         attachment = MIMEApplication(self.export_bytes())
         attachment.add_header("Content-Disposition", "attachment", filename=self.get_filename())
         return attachment
 
-    def export_response(self):
+    def export_response(self, settings=None):
         response = HttpResponse(content_type=self.export.get_content_type())
         response['Content-Disposition'] = 'attachment; filename="{0}"'.format(self.get_filename())
-        response.write(self.export_bytes)
+        response.write(self.export_bytes())
         return response
 
 
