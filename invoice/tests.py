@@ -12,14 +12,6 @@ class InvoiceTest(TestCase):
     def setUp(self):
         self.invoice = test_data.load()
 
-    def testInvoiceUID(self):
-        self.assertEquals(self.invoice.uid, u'TTH9R')
-
-        self.invoice.uid = False
-        self.invoice.save()
-
-        self.assertEquals(self.invoice.uid, u'TTH9R')
-
     def testGetDue(self):
         self.assertEquals(Invoice.objects.get_due().count(), 1)
 

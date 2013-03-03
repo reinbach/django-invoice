@@ -14,8 +14,12 @@ The model provides an option to use your own Address model via setting `INVOICE_
 and Bank Account model via `INVOICE_BANK_ACCOUNT_MODEL`. Both settings the has to be a string
 with full class name (e.g. "myproject.core.models.CompanyInformation").
 The only rule for custom models is that it has to have a method `as_text` which returns unicode string with newline separators `\n`.
-Addresses will be used as contractor and subscriber. If BankAccount reference is presented, then it
-will be rendered below contractor information.
+Addresses will be used as contractor and subscriber. 
+
+If BankAccount reference is presented, then it will be rendered below contractor information. Bellow bank
+account information will be rendered *Variable symbol: {{ invoice.uid }}*. Please make sure that
+you provide an numerical identifier when creating an invoice. Some random stuff will be generated
+otherwise.
 
 The invoice is intended to be referenced via foreign key from another model which handles
 access policy and payments. These mechanisms are not provided in this app in favor for its

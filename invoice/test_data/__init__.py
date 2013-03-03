@@ -36,5 +36,5 @@ def load():
         logo = None
 
     invoice = Invoice.objects.create(contractor=contractor, subscriber=subscriber,
-                                     logo=logo, contractor_bank=account)
+                                     logo=logo, contractor_bank=account, uid="10001")
     return invoice

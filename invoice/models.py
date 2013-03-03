@@ -65,7 +65,7 @@ class Invoice(models.Model):
         (STATE_INVOICE, _("Invoice")),
     )
 
-    uid = models.CharField(unique=True, max_length=6, blank=True, editable=False)
+    uid = models.CharField(unique=True, max_length=8, blank=True)
     contractor = models.ForeignKey(Address, related_name='+')
     contractor_bank = models.ForeignKey(BankAccount, related_name='+', db_index=False,
                                         null=True, blank=True)

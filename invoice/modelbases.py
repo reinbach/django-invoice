@@ -53,5 +53,4 @@ class BankAccount(models.Model):
         return u"{0} - {1} / {2}".format(self.prefix, self.number, self.bank)
 
     def as_text(self):
-        return smart_text(self)
-
+        return u"{0}: {1}".format(_("Bank account"), smart_text(self))

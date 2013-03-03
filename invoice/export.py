@@ -120,11 +120,12 @@ class PdfExport(Export):
         textobject.textLine(u"{0}: {1}".format(_('Due date'), format_date(invoice.date_due)))
         canvas.drawText(textobject)
 
-        textobject = canvas.beginText(11.5*cm, -9*cm)
         if invoice.contractor_bank:
-            textobject.textLine(u"{0}: {1}".format(_('Bank account'), invoice.contractor_bank))
-        textobject.textLine(u"{0}: {1}".format(_('Variable symbol'), invoice.uid))
-        canvas.drawText(textobject)
+            textobject = canvas.beginText(11.5*cm, -9*cm)
+            for line in invoice.contractor_bank.as_text().split("\n"):
+                textobject.textLine(line)
+            textobject.textLine(u"{0}: {1}".format(_('Variable symbol'), invoice.uid))
+            canvas.drawText(textobject)
 
     def draw_items(self, invoice, canvas):
         # Items
