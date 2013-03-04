@@ -1,6 +1,7 @@
 # coding: utf-8
 import os
-from invoice.models import Invoice, Address, BankAccount
+from decimal import Decimal
+from invoice.models import Invoice, InvoiceItem, Address, BankAccount
 
 
 def load():
@@ -38,4 +39,13 @@ def load():
     invoice, c = Invoice.objects.get_or_create(uid="30003", defaults=dict(contractor=contractor,
                                                subscriber=subscriber, logo=logo,
                                                contractor_bank=account))
+    InvoiceItem.objects.get_or_create(invoice=invoice, description="Bunch of cow-horse meat",
+        defaults={"quantity": 10, "unit_price": Decimal("550.00")})
+    InvoiceItem.objects.get_or_create(invoice=invoice, description="World peace",
+        defaults={"quantity": 1, "unit_price": Decimal("999999.99")})
+    InvoiceItem.objects.get_or_create(invoice=invoice, description="IKEA flashlight",
+        defaults={"quantity": 1, "unit_price": Decimal("4.50")})
+    InvoiceItem.objects.get_or_create(invoice=invoice, description="Sweet dream",
+        defaults={"quantity": 2, "unit_price": Decimal("0.00")})
+
     return invoice

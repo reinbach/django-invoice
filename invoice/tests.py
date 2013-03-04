@@ -72,11 +72,3 @@ class InvoiceSettingTest(TestCase):
         self.failUnless(os.path.exists(filename))
         stats = os.stat(filename)
         self.failIf(stats.st_size < 100)  # the file has to contain something
-
-
-class InvoiceItemsTest(TestCase):
-    def setUp(self):
-        self.invoice = test_data.load()
-
-    def test_no_settings(self):
-        self.failIf(InvoiceSetting.objects.all().exists())

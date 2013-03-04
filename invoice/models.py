@@ -161,6 +161,9 @@ class InvoiceItem(models.Model):
     unit_price = models.DecimalField(max_digits=8, decimal_places=2)
     quantity = models.DecimalField(max_digits=8, decimal_places=2, default=1)
 
+    class Meta:
+        ordering = ['unit_price']
+
     def total(self):
         total = Decimal(str(self.unit_price * self.quantity))
         return total.quantize(Decimal('0.01'))
