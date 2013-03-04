@@ -63,7 +63,6 @@ class InvoiceSettingTest(TestCase):
             del self.invoice.settings
         self.failIf(hasattr(self.invoice, "settings"))
         if self.invoice.logo:
-            print self.invoice.logo
             self.failUnless(os.path.exists(self.invoice.logo))
 
         self.failIfEqual(self.invoice.get_settings(), None)

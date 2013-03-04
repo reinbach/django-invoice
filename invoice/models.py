@@ -36,7 +36,7 @@ class InvoiceSetting(models.Model):
     footer_text = models.TextField(help_text=_("The text will be rendered as a template on the bottom of an invoice. "
                                                "You have `invoice` variable available here"))
     line_color = models.CommaSeparatedIntegerField(default="200,128,128", max_length=14,
-                                                   help_text=_('Three comma separated values <0, 256>'))
+                                                   help_text=_('Three comma separated values <0, 256> (means R,G,B)'))
 
     class Meta:
         ordering = ['id', ]
