@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import division
 from os.path import abspath, dirname, join
 
 from reportlab.pdfbase import pdfmetrics
@@ -82,13 +83,28 @@ class PdfExport(Export):
 
     def draw_header(self, invoice, canvas):
         """ Draws the invoice header """
-        canvas.setStrokeColorRGB(0.9, 0.5, 0.2)
         canvas.setFillColorRGB(0.2, 0.2, 0.2)
         canvas.setFont(self.FONT_NAME, 16)
         canvas.drawString(2*cm, self.baseline, smart_text(invoice))
         canvas.drawString((21-6)*cm, self.baseline, format_date(invoice.date_issuance))
         canvas.setLineWidth(3)
         self.baseline -= 0.3*cm
+        colors = (0.9, 0.5, 0.2)
+        if invoice.get_settings():
+            try:
+                colors = []
+                nums = 0
+                for value in invoice.get_settings().line_color.split(","):
+                    if not value: continue
+                    color = int(value)/256
+                    if color < 0 or color > 1: raise ValueError("Color is not in interval 0, 256")
+                    colors.append(color)
+                    nums += 1
+                    if nums > 3:
+                        raise ValueError("Need only three values of line color")
+            except ValueError:
+                colors = (0.9, 0.5, 0.2)
+        canvas.setStrokeColorRGB(*colors)
         canvas.line(1.5*cm, self.baseline, (21 - 1.5)*cm, self.baseline)
         self.baseline -= 1*cm
 

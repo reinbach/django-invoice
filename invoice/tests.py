@@ -2,7 +2,7 @@ import datetime
 import os
 
 from django.test import TestCase
-from invoice.models import Invoice, InvoiceSettings
+from invoice.models import Invoice, InvoiceSetting
 
 from invoice import test_data
 
@@ -45,10 +45,10 @@ class InvoiceTest(TestCase):
             del self.invoice.settings
         self.failIf(hasattr(self.invoice, "settings"))
 
-        InvoiceSettings.objects.create(name="Test settings",
+        InvoiceSetting.objects.create(name="Test settings",
             info_text=u"Pay in time the invoice {{ invoice.uid }}",
             footer_text="According to legal laws blabla... {{ invoice.state }}")
-        self.failUnlessEqual(InvoiceSettings.objects.count(), 1)
+        self.failUnlessEqual(InvoiceSetting.objects.count(), 1)
 
         self.failIfEqual(self.invoice.get_settings(), None)
         filename = self.invoice.export_file("/tmp")

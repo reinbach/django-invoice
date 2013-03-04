@@ -18,6 +18,9 @@ class Address(models.Model):
 
     extra = models.TextField(null=True, blank=True)
 
+    class Meta:
+        verbose_name_plural = _("Addresses")
+
     def __str__(self):
         return u"{0}, {1}".format(self.name, self.street)
 

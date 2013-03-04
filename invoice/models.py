@@ -20,15 +20,23 @@ BankAccount = load_class(getattr(settings, 'INVOICE_BANK_ACCOUNT_MODEL', 'invoic
 
 
 @python_2_unicode_compatible
-class InvoiceSettings(models.Model):
+class InvoiceSetting(models.Model):
+    '''The class modifies texts and appearance of generated invoice.
+    Automatically the first style will be used for every invoice if
+    you don't assign another settings into `instance.settings`.
+    If you don't want to use these settings just don't create any.
+    '''
     STYLE_CHOICES = (
         ('bold', _("Bold")),
         ('italic', _("Italic")),
     )
-    name = models.CharField(max_length=20)
-    info_text = models.TextField()
-    footer_text = models.TextField()
-    line_color = models.PositiveSmallIntegerField(default=12)
+    name = models.CharField(max_length=20, help_text=_('For your internal identification'))
+    info_text = models.TextField(help_text=_("The text will be rendered as a template above ITEMS part. "
+                                             "You have `invoice` variable available here"))
+    footer_text = models.TextField(help_text=_("The text will be rendered as a template on the bottom of an invoice. "
+                                               "You have `invoice` variable available here"))
+    line_color = models.CommaSeparatedIntegerField(default="200,128,128", max_length=14,
+                                                   help_text=_('Three comma separated values <0, 256>'))
 
     class Meta:
         ordering = ['id', ]
@@ -115,8 +123,8 @@ class Invoice(models.Model):
     def get_settings(self):
         # how to make it right?
         if not hasattr(self, "settings"):
-            if InvoiceSettings.objects.count() >= 1:
-                setattr(self, "settings", InvoiceSettings.objects.all()[0])
+            if InvoiceSetting.objects.count() >= 1:
+                setattr(self, "settings", InvoiceSetting.objects.all()[0])
             else:
                 setattr(self, "settings", None)
         return self.settings
@@ -131,7 +139,7 @@ class Invoice(models.Model):
     def export_bytes(self, settings=None):
         stream = BytesIO()
         self.export.draw(self, stream)
-        output = stream.get_value()
+        output = stream.getvalue()
         stream.close()
         return output
 
