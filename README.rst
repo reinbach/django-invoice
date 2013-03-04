@@ -1,7 +1,7 @@
 :author: Tomas Peterka & Simon Luijk
 
-Django Invoice
-==============
+Django Invoice (currently unstable)
+===================================
 
 General purpose invoicing app.
 
