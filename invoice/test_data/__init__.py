@@ -35,6 +35,7 @@ def load():
     if not os.path.exists(logo):
         logo = None
 
-    invoice = Invoice.objects.create(contractor=contractor, subscriber=subscriber,
-                                     logo=logo, contractor_bank=account, uid="10001")
+    invoice, c = Invoice.objects.get_or_create(uid="30003", defaults=dict(contractor=contractor,
+                                               subscriber=subscriber, logo=logo,
+                                               contractor_bank=account))
     return invoice
