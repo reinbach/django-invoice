@@ -73,7 +73,7 @@ You can try example project using the Invoices. There is currently only admin in
 which allows you to try to make your own InvoiceSetting and export invoice PDF from it
 via admin action.
 
-You can run tests from this example app. We are using the ingenious Discovery Runner from
-https://github.com/jezdez/django-discover-runner. I have made a copy so you don't need to
-install it. Otherwise it's easy: `pip install django-discover-runner`.
-You can run the test via: python manage.py test invoice.tests
+You can run tests from this example app. You can run the test via ::
+
+    python manage.py test invoice
+

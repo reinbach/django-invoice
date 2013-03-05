@@ -7,8 +7,6 @@ PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 ADMINS = ()
 MANAGERS = ADMINS
 
-TEST_RUNNER = 'testapp.runner.DiscoverRunner'
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import division
 import os
 from io import FileIO, BytesIO
 from datetime import date, timedelta
@@ -35,8 +36,8 @@ class InvoiceSetting(models.Model):
                                              "You have `invoice` variable available here"))
     footer_text = models.TextField(help_text=_("The text will be rendered as a template on the bottom of an invoice. "
                                                "You have `invoice` variable available here"))
-    line_color = models.CommaSeparatedIntegerField(default="200,128,128", max_length=14,
-                                                   help_text=_('Three comma separated values <0, 256> (means R,G,B)'))
+    line_color = models.CommaSeparatedIntegerField(default="200,128,128", max_length=11,
+                                                   help_text=_('Three comma separated values <0, 255> (R,G,B values)'))
 
     class Meta:
         ordering = ['id', ]
@@ -50,13 +51,30 @@ class InvoiceSetting(models.Model):
     def footer(self, context):
         return Template(self.footer_text).render(Context(context))
 
+    @property
+    def color(self):
+        colors = []
+        if not self.line_color:
+            return colors
+        try:
+            colors_str = self.line_color.split(",")
+            if len(colors_str) != 3:
+                return colors
+            for value in colors_str:
+                color = int(value)/256
+                if color < 0 or color > 1: raise ValueError("Color is not in interval 0, 256")
+                colors.append(color)
+        except ValueError:
+            return ()
+        return colors
+
 
 class InvoiceManager(models.Manager):
 
     def get_due(self):
         return (self.get_query_set()
                     .filter(date_issuance__lte=date.today())
-                    .filter(state=Invoice.STATE_PROFORMA)
+                    .filter(date_paid__isnull=True)
                 )
 
 

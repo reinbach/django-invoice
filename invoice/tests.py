@@ -19,11 +19,11 @@ class InvoiceTest(TestCase):
         self.invoice.set_paid()
         self.assertEquals(Invoice.objects.get_due().count(), 0)
 
+    def test_get_due2(self):
         today = datetime.date.today()
         yesterday = today - datetime.timedelta(days=1)
         tomorrow = today + datetime.timedelta(days=1)
 
-        self.invoice.state = Invoice.STATE_PROFORMA
         self.invoice.date_issuance = yesterday
         self.invoice.save()
         self.assertEquals(Invoice.objects.get_due().count(), 1)
@@ -71,3 +71,13 @@ class InvoiceSettingTest(TestCase):
         self.failUnless(os.path.exists(filename))
         stats = os.stat(filename)
         self.failIf(stats.st_size < 100)  # the file has to contain something
+
+    def test_setting_color(self):
+        self.settings.line_color = "1,1,1,1"
+        self.settings.save()
+        self.failIf(self.settings.color)  # color has to return empty list
+        self.failUnlessEqual(self.settings.color or (1, 1, 1), (1, 1, 1))
+
+        self.settings.line_color = "128,128,128"
+        self.settings.save()
+        self.failUnlessEqual(self.settings.color, [0.5, 0.5, 0.5])

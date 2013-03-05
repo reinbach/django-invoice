@@ -1,0 +1,171 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: django-invoice 0.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-03-05 16:10+0100\n"
+"PO-Revision-Date: 2013-03-05 11:02+0100\n"
+"Last-Translator: Tomáš Peterka <peterka@webriginals.com>\n"
+"Language-Team: cs <prestizni@gmail.com>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Poedit 1.5.4\n"
+
+#: admin.py:31
+msgid "Check only one row"
+msgstr "Označte pouze jeden řádek"
+
+#: admin.py:34
+msgid "The action needs at least one invoice in the database"
+msgstr "Tato akce vyžaduje alespoň jednu fakturu v databázi"
+
+#: admin.py:39
+msgid "Generate PDF invoice using checked setting"
+msgstr "Vygenerovat PDF fakturu za použití označeného nastavení"
+
+#: export.py:101
+msgid "The Subscriber"
+msgstr "Odběratel"
+
+#: export.py:114
+msgid "The Contractor"
+msgstr "Dodavatel"
+
+#: export.py:134
+msgid "Date issuance"
+msgstr "Datum vystavení"
+
+#: export.py:135
+msgid "Due date"
+msgstr "Datum splatnosti"
+
+#: export.py:142
+msgid "Variable symbol"
+msgstr "Variabilní symbol"
+
+#: export.py:158
+msgid "Quantity"
+msgstr "Množství"
+
+#: export.py:158
+msgid "Description"
+msgstr "Popis"
+
+#: export.py:158
+msgid "Amount"
+msgstr "Množství"
+
+#: export.py:158 export.py:166
+msgid "Total"
+msgstr "Celkem"
+
+#: modelbases.py:16
+msgid "Business ID"
+msgstr "IČ"
+
+#: modelbases.py:17
+msgid "Tax ID"
+msgstr "DIČ"
+
+#: modelbases.py:22
+msgid "Addresses"
+msgstr "Adresa"
+
+#: modelbases.py:34
+msgid "Reg No"
+msgstr "IČ"
+
+#: modelbases.py:35
+msgid "Tax No"
+msgstr "DIČ"
+
+#: modelbases.py:47
+msgid "Prefix"
+msgstr "Předčíslí"
+
+#: modelbases.py:49
+msgid "Account number"
+msgstr "Číslo účtu"
+
+#: modelbases.py:51
+msgid "Bank code"
+msgstr "Kód banky"
+
+#: modelbases.py:59
+msgid "Bank account"
+msgstr "Bankovní účet"
+
+#: models.py:31
+msgid "Bold"
+msgstr "Tlustě"
+
+#: models.py:32
+msgid "Italic"
+msgstr "Kurzíva"
+
+#: models.py:34
+msgid "For your internal identification"
+msgstr "Pro vači interní identifikaci"
+
+#: models.py:35
+msgid ""
+"The text will be rendered as a template above ITEMS part. You have `invoice` "
+"variable available here"
+msgstr ""
+"Tento text bude vyrenderován jako šablona nad položkamy faktury. Máte k "
+"dispozici {{ invoice }} proměnnou"
+
+#: models.py:37
+msgid ""
+"The text will be rendered as a template on the bottom of an invoice. You "
+"have `invoice` variable available here"
+msgstr ""
+"Tento text bude vyrenderován jako šablona ve spodku faktury. Máte k "
+"dispozici {{ invoice }} proměnnou"
+
+#: models.py:40
+msgid "Three comma separated values <0, 255> (R,G,B values)"
+msgstr "Tři čísla oddělená čárkou v rozsahu <0, 255> včetně (RGB hodnoty)"
+
+#: models.py:86
+msgid "Proforma"
+msgstr "Proforma"
+
+#: models.py:87 models.py:112
+msgid "Invoice"
+msgstr "Faktura"
+
+#: models.py:105
+msgid "Date added"
+msgstr "Datum vytvoření"
+
+#: models.py:106
+msgid "Last modified"
+msgstr "Poslední úprava"
+
+#: models.py:112
+msgid "Nr."
+msgstr "č."
+
+#: models.py:139
+msgid "Invoice-{uid}.pdf"
+msgstr "Faktura-{uid}.pdf"
+
+#: templates/admin/invoice/invoice/change_form.html:7
+msgid "History"
+msgstr "Historie"
+
+#: templates/admin/invoice/invoice/change_form.html:8
+msgid "View on site"
+msgstr "Prohl0dnout na str8nce"
+
+#: templates/admin/invoice/invoice/change_form.html:9
+msgid "PDF"
+msgstr "PDF"
