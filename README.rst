@@ -42,17 +42,17 @@ Here we provide an example invoice generated from test
 
 .. image:: example.png
     :align: right
-    :class: float-right
-
+    :class: pull-right
 
 
 
 Export module
 -------------
 
-Provides base for Export class and PDFExport class which is the default 
-export class in Invoice model. There is possibility to write your own exporter
-and then simply use it within Invoice ::
+Provides base class `Export` for custom exporters. Also includes a `PDFExport` class which is
+the default export class in Invoice model. The exporter instance is stored as class attribute
+in `Invoice.export`. One can modify this attribute to substitue it's own exporter.
+All Invoice's methods `export_*` will be functional the same. Here is a example ::
 
     from myproject import MyExporter
     
@@ -64,14 +64,21 @@ and then simply use it within Invoice ::
     email.send()
 
 
+Invoice Setting
+---------------
+
+There is simple dynamic way how to customize exported invoice. It is InvoiceSetting model.
+It provides way how to change footer text and add some legal information above table of items.
+It is also capable of changing the first line color.
+
+
 
 TestApp
 -------
-For running you need just django, reportlab and PIL installed.
+We provide an example project. For running you need just django, reportlab and PIL installed.
 
-You can try example project using the Invoices. There is currently only admin interface
-which allows you to try to make your own InvoiceSetting and export invoice PDF from it
-via admin action.
+There is currently only admin interface which allows you to try to make your own InvoiceSetting
+and export invoice PDF from it via admin action. Don't forget to syncdb first.
 
 You can run tests from this example app. You can run the test via ::
 
