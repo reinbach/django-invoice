@@ -71,6 +71,12 @@ There is simple dynamic way how to customize exported invoice. It is InvoiceSett
 It provides way how to change footer text and add some legal information above table of items.
 It is also capable of changing the first line color.
 
+If there are no settings in the DB, the text places will remain empty, so there is no need to
+create settings if you don't want to. On the other hand there is possibility to have  many
+settings for different customers. You can swap them dynamicaly via ::
+
+    invoice.settings = InvoiceSetting.objects.get(name="For special customer")
+
 
 
 TestApp
