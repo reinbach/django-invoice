@@ -13,7 +13,7 @@ from django.template import Template, Context
 from django.utils.encoding import python_2_unicode_compatible, smart_text
 from django.utils.translation import ugettext as _
 
-from invoice.utils import format_currency, friendly_id, load_class, model_to_dict
+from invoice.utils import format_currency, load_class, model_to_dict
 from invoice.export import PdfExport
 
 Address = load_class(getattr(settings, 'INVOICE_ADDRESS_MODEL', 'invoice.modelbases.Address'))
@@ -87,7 +87,7 @@ class Invoice(models.Model):
         (STATE_INVOICE, _("Invoice")),
     )
 
-    uid = models.CharField(unique=True, max_length=10, blank=True)
+    # uid = models.CharField(unique=True, max_length=10, blank=True)
     contractor = models.ForeignKey(Address, related_name='+')
     contractor_bank = models.ForeignKey(BankAccount, related_name='+', db_index=False,
                                         null=True, blank=True)
@@ -109,22 +109,25 @@ class Invoice(models.Model):
     export = PdfExport()
 
     def __str__(self):
-        return smart_text("{0} {1} {2}").format(_("Invoice"), _("Nr."), self.uid)
+        return smart_text("{0} {1} {2}").format(self.state_text, _("nr."), self.id)
 
     class Meta:
-        ordering = ('-date_issuance', 'uid')
+        ordering = ('-date_issuance', 'id')
 
-    def save(self, *args, **kwargs):
-        super(Invoice, self).save(*args, **kwargs)
-        if not self.uid:
-            self.uid = friendly_id.encode(self.pk)
-            kwargs['force_insert'] = False
-            super(Invoice, self).save(*args, **kwargs)
+    @property
+    def state_text(self):
+        for state in self.INVOICE_STATES:
+            if state[0] == self.state:
+                return state[1]
 
     def set_paid(self):
         self.date_paid = date.today()
         self.state = self.STATE_INVOICE
         self.save()
+
+    def add_item(self, description, price, quantity=1):
+        InvoiceItem.objects.create(invoice=self, description=description,
+                                   unit_price=price, quantity=quantity)
 
     def total_amount(self):
         return format_currency(self.total())
@@ -136,7 +139,7 @@ class Invoice(models.Model):
         return total
 
     def get_filename(self):
-        return _('Invoice-{uid}.pdf').format(**model_to_dict(self))
+        return _('{0}-{1}.pdf').format(self.state_text, self.id)
 
     def get_settings(self):
         # how to make it right?

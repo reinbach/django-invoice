@@ -11,9 +11,9 @@ class InvoiceItemInline(admin.TabularInline):
 
 class InvoiceAdmin(admin.ModelAdmin):
     inlines = [InvoiceItemInline, ]
-    search_fields = ('uid', 'contractor__name', 'subscriber__name')
+    search_fields = ('id', 'contractor__name', 'subscriber__name')
     list_display = (
-        'uid',
+        'id',
         'state',
         'total_amount',
         'date_issuance',

@@ -84,7 +84,7 @@ class PdfExport(Export):
         """ Draws the invoice header """
         canvas.setFillColorRGB(0.2, 0.2, 0.2)
         canvas.setFont(self.FONT_NAME, 16)
-        canvas.drawString(2*cm, self.baseline, smart_text(invoice.state))
+        canvas.drawString(2*cm, self.baseline, smart_text(invoice.state_text))
         canvas.drawString((21-6)*cm, self.baseline, format_date(invoice.date_issuance))
         canvas.setLineWidth(3)
         self.baseline -= 0.3*cm
@@ -139,7 +139,7 @@ class PdfExport(Export):
             textobject = canvas.beginText(11.5*cm, self.baseline)
             for line in invoice.contractor_bank.as_text().split("\n"):
                 textobject.textLine(line)
-            textobject.textLine(u"{0}: {1}".format(_('Variable symbol'), invoice.uid))
+            textobject.textLine(u"{0}: {1}".format(_('Variable symbol'), invoice.id))
             canvas.drawText(textobject)
 
         self.baseline -= 1.5*cm

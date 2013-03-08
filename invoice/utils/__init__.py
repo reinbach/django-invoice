@@ -1,15 +1,15 @@
 from django.db import models
 from django.core import exceptions
 from django.utils.importlib import import_module
-from django.utils.encoding import smart_text
+from django.utils.translation import ugettext as _
 
 
 def format_currency(amount):
-    return smart_text(amount)
+    return _("{0} $").format(amount)
 
 
 def format_date(date):
-    return smart_text(date)
+    return date.strftime(_("%m-%d-%Y"))
 
 
 def load_class(class_path, setting_name=None):

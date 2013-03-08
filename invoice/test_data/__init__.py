@@ -36,9 +36,10 @@ def load():
     if not os.path.exists(logo):
         logo = None
 
-    invoice, c = Invoice.objects.get_or_create(uid="30003", defaults=dict(contractor=contractor,
-                                               subscriber=subscriber, logo=logo,
-                                               contractor_bank=account))
+    invoice, c = Invoice.objects.get_or_create(contractor=contractor,
+                                               subscriber=subscriber,
+                                               defaults=dict(logo=logo,
+                                                             contractor_bank=account))
     InvoiceItem.objects.get_or_create(invoice=invoice, description="Bunch of cow-horse meat",
         defaults={"quantity": 10, "unit_price": Decimal("550.00")})
     InvoiceItem.objects.get_or_create(invoice=invoice, description="World peace",

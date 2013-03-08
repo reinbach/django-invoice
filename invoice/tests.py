@@ -50,14 +50,12 @@ class InvoiceSettingTest(TestCase):
             name="Test settings",
             defaults=dict(
                 line_color="50,50,128",
-                info_text=u"Pay in time the invoice {{ invoice.uid }}",
+                info_text=u"Pay in time the invoice {{ invoice.id }}",
                 footer_text="According to legal laws blabla... {{ invoice.state }}"
             )
         )
 
     def test_invoice_settings(self):
-        # generate new filename
-        self.invoice.uid = "SETTINGS01"
         # clear the settings cache in invoice
         if hasattr(self.invoice, "settings"):
             del self.invoice.settings
