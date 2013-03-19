@@ -1,6 +1,9 @@
 # coding: utf-8
 from __future__ import division
 import os
+import random
+import string
+
 from io import FileIO, BytesIO
 from datetime import date, timedelta
 from decimal import Decimal
@@ -13,7 +16,7 @@ from django.template import Template, Context
 from django.utils.encoding import python_2_unicode_compatible, smart_text
 from django.utils.translation import ugettext as _
 
-from invoice.utils import format_currency, load_class, model_to_dict
+from invoice.utils import format_currency, load_class
 from invoice.export import PdfExport
 
 Address = load_class(getattr(settings, 'INVOICE_ADDRESS_MODEL', 'invoice.modelbases.Address'))
@@ -87,7 +90,7 @@ class Invoice(models.Model):
         (STATE_INVOICE, _("Invoice")),
     )
 
-    # uid = models.CharField(unique=True, max_length=10, blank=True)
+    uid = models.CharField(unique=True, max_length=10, blank=True)
     contractor = models.ForeignKey(Address, related_name='+')
     contractor_bank = models.ForeignKey(BankAccount, related_name='+', db_index=False,
                                         null=True, blank=True)
@@ -113,6 +116,13 @@ class Invoice(models.Model):
 
     class Meta:
         ordering = ('-date_issuance', 'id')
+
+    def save(self, *args, **kwargs):
+        if not self.uid:
+            self.uid = "".join(random.sample(string.ascii_letters + string.digits, 8))
+            while Invoice.objects.filter(uid=self.uid).exists():
+                self.uid = "".join(random.sample(string.ascii_letters + string.digits, 8))
+        return super(Invoice, self).save(*args, **kwargs)
 
     @property
     def state_text(self):
