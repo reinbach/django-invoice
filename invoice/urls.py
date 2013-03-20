@@ -1,11 +1,13 @@
 # coding: utf-8
 from django.conf.urls import patterns, url
 from django.utils.translation import gettext
+from django.template.defaultfilters import slugify
+from invoice.views import download
 
-from invoice.views import download_pdf
 
+INVOICE_URL_NAME = slugify(gettext('invoice'))
 
 urlpatterns = patterns(
     '',
-    url('^{0}/(?P<uid>[a-zA-Z0-9]+)$'.format(gettext("invoice")),  download_pdf, name="invoice"),
+    url('^{0}/(?P<uid>[a-zA-Z0-9]+)/$'.format(INVOICE_URL_NAME), download, name="invoice"),
 )

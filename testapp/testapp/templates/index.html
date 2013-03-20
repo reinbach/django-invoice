@@ -1,0 +1,13 @@
+{% load url from future %}
+<html>
+    <body>
+        <h1>Invoice TestApp</h1>
+        <ul>
+            {% for invoice in invoices %}
+            <li><a href="{% url 'invoice' uid=invoice.uid %}">Download the {{ invoice }}</a></li>
+            {% empty %}
+            No invoices in the system. Please create some.
+            {% endfor %}
+        </ul>
+    </body>
+</html>
