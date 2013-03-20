@@ -14,7 +14,7 @@ setup(
 
     author='Tomas Peterka',
     author_email='prestizni@gmail.com',
-    licence="GPL v3",
+    license="GPL v3",
     url='http://pypi.python.org/pypi/{0}/'.format(APP_NAME),
     keywords="django invoice pdf",
 
