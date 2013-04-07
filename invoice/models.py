@@ -6,7 +6,7 @@ import string
 
 from io import FileIO, BytesIO
 from datetime import date, timedelta
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from email.mime.application import MIMEApplication
 
 from django.db import models
@@ -120,7 +120,7 @@ class Invoice(models.Model):
     def save(self, *args, **kwargs):
         if not self.uid:
             self.uid = "".join(random.sample(string.ascii_letters + string.digits, 8))
-            while Invoice.objects.filter(uid=self.uid).exists():
+            while self.__class__.objects.filter(uid=self.uid).exists():
                 self.uid = "".join(random.sample(string.ascii_letters + string.digits, 8))
         return super(Invoice, self).save(*args, **kwargs)
 
@@ -140,9 +140,11 @@ class Invoice(models.Model):
                                    unit_price=price, quantity=quantity)
 
     def total_amount(self):
+        '''Returns total as formated string'''
         return format_currency(self.total())
 
     def total(self):
+        '''Computes total price using all items as decimal number'''
         total = Decimal('0.00')
         for item in self.items.all():
             total = total + item.total()
@@ -152,7 +154,6 @@ class Invoice(models.Model):
         return _('{0}-{1}.pdf').format(self.state_text, self.id)
 
     def get_settings(self):
-        # how to make it right?
         if not hasattr(self, "settings"):
             if InvoiceSetting.objects.count() >= 1:
                 setattr(self, "settings", InvoiceSetting.objects.all()[0])
@@ -197,7 +198,7 @@ class InvoiceItem(models.Model):
 
     def total(self):
         total = Decimal(str(self.unit_price * self.quantity))
-        return total.quantize(Decimal('0.01'))
+        return total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
     def __unicode__(self):
         return self.description

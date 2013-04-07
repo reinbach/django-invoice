@@ -40,13 +40,17 @@ def load():
                                                subscriber=subscriber,
                                                defaults=dict(logo=logo,
                                                              contractor_bank=account))
-    InvoiceItem.objects.get_or_create(invoice=invoice, description="Bunch of cow-horse meat",
+    InvoiceItem.objects.get_or_create(
+        invoice=invoice, description="Bunch of cow-horse meat",
         defaults={"quantity": 10, "unit_price": Decimal("550.00")})
-    InvoiceItem.objects.get_or_create(invoice=invoice, description="World peace",
+    InvoiceItem.objects.get_or_create(
+        invoice=invoice, description="World peace",
         defaults={"quantity": 1, "unit_price": Decimal("999999.99")})
-    InvoiceItem.objects.get_or_create(invoice=invoice, description="IKEA flashlight",
+    InvoiceItem.objects.get_or_create(
+        invoice=invoice, description="IKEA flashlight",
         defaults={"quantity": 1, "unit_price": Decimal("4.50")})
-    InvoiceItem.objects.get_or_create(invoice=invoice, description="Sweet dream",
+    InvoiceItem.objects.get_or_create(
+        invoice=invoice, description="Sweet dream",
         defaults={"quantity": 2, "unit_price": Decimal("0.00")})
 
     return invoice

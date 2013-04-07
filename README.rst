@@ -19,7 +19,7 @@ If BankAccount reference is presented, then it will be rendered below contractor
 *Variable symbol: {{ invoice.id }}*.
 
 The invoice is intended to be referenced via foreign key from another model which handles
-access policy and payments. These mechanisms are not provided in this app in favor for its
+access policy and payments. These mechanisms are not provided in this app in favor of
 generality.
 
 Invoice has some interesting methods:
