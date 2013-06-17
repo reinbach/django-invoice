@@ -9,8 +9,10 @@ setup(
     description='Pluggable django invoicing app',
     packages=[
         'invoice',
-        'invoice.utils'
+        'invoice.utils',
+        'invoice.test_data'
     ],
+    include_package_data=True,
 
     author='Tomas Peterka',
     author_email='prestizni@gmail.com',
