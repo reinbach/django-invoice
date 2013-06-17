@@ -59,7 +59,6 @@ class InvoiceSettingTest(TestCase):
         # clear the settings cache in invoice
         if hasattr(self.invoice, "settings"):
             del self.invoice.settings
-        self.failIf(hasattr(self.invoice, "settings"))
         if self.invoice.logo:
             self.failUnless(os.path.exists(self.invoice.logo))
 
