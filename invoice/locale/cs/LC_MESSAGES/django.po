@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: django-invoice 0.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-03-05 16:10+0100\n"
-"PO-Revision-Date: 2013-03-05 11:02+0100\n"
+"POT-Creation-Date: 2013-06-24 21:22+0200\n"
+"PO-Revision-Date: 2013-06-24 21:25+0100\n"
 "Last-Translator: Tomáš Peterka <peterka@webriginals.com>\n"
 "Language-Team: cs <prestizni@gmail.com>\n"
 "Language: cs\n"
@@ -46,23 +46,28 @@ msgstr "Datum vystavení"
 msgid "Due date"
 msgstr "Datum splatnosti"
 
-#: export.py:142
+#: export.py:140
+#, fuzzy
+msgid "Bank account: "
+msgstr "Bankovní účet"
+
+#: export.py:141
 msgid "Variable symbol"
 msgstr "Variabilní symbol"
 
-#: export.py:158
+#: export.py:157
 msgid "Quantity"
 msgstr "Množství"
 
-#: export.py:158
+#: export.py:157
 msgid "Description"
 msgstr "Popis"
 
-#: export.py:158
+#: export.py:157
 msgid "Amount"
 msgstr "Množství"
 
-#: export.py:158 export.py:166
+#: export.py:157 export.py:165
 msgid "Total"
 msgstr "Celkem"
 
@@ -102,19 +107,19 @@ msgstr "Kód banky"
 msgid "Bank account"
 msgstr "Bankovní účet"
 
-#: models.py:31
+#: models.py:34
 msgid "Bold"
 msgstr "Tlustě"
 
-#: models.py:32
+#: models.py:35
 msgid "Italic"
 msgstr "Kurzíva"
 
-#: models.py:34
+#: models.py:37
 msgid "For your internal identification"
 msgstr "Pro vači interní identifikaci"
 
-#: models.py:35
+#: models.py:38
 msgid ""
 "The text will be rendered as a template above ITEMS part. You have `invoice` "
 "variable available here"
@@ -122,7 +127,7 @@ msgstr ""
 "Tento text bude vyrenderován jako šablona nad položkamy faktury. Máte k "
 "dispozici {{ invoice }} proměnnou"
 
-#: models.py:37
+#: models.py:40
 msgid ""
 "The text will be rendered as a template on the bottom of an invoice. You "
 "have `invoice` variable available here"
@@ -130,33 +135,39 @@ msgstr ""
 "Tento text bude vyrenderován jako šablona ve spodku faktury. Máte k "
 "dispozici {{ invoice }} proměnnou"
 
-#: models.py:40
+#: models.py:43
 msgid "Three comma separated values <0, 255> (R,G,B values)"
 msgstr "Tři čísla oddělená čárkou v rozsahu <0, 255> včetně (RGB hodnoty)"
 
-#: models.py:86
+#: models.py:89
 msgid "Proforma"
 msgstr "Proforma"
 
-#: models.py:87 models.py:112
+#: models.py:90
 msgid "Invoice"
 msgstr "Faktura"
 
-#: models.py:105
+#: models.py:108
 msgid "Date added"
 msgstr "Datum vytvoření"
 
-#: models.py:106
+#: models.py:109
 msgid "Last modified"
 msgstr "Poslední úprava"
 
-#: models.py:112
-msgid "Nr."
+#: models.py:115
+#, fuzzy
+msgid "nr."
 msgstr "č."
 
-#: models.py:139
-msgid "Invoice-{uid}.pdf"
-msgstr "Faktura-{uid}.pdf"
+#: models.py:154
+msgid "{0}-{1}.pdf"
+msgstr ""
+
+#: urls.py:8
+#, fuzzy
+msgid "invoice"
+msgstr "Faktura"
 
 #: templates/admin/invoice/invoice/change_form.html:7
 msgid "History"
@@ -164,8 +175,19 @@ msgstr "Historie"
 
 #: templates/admin/invoice/invoice/change_form.html:8
 msgid "View on site"
-msgstr "Prohl0dnout na str8nce"
+msgstr "Prohlédnout na stránce"
 
 #: templates/admin/invoice/invoice/change_form.html:9
 msgid "PDF"
 msgstr "PDF"
+
+#: utils/__init__.py:8
+msgid "{0} $"
+msgstr "{0} Kč"
+
+#: utils/__init__.py:12
+msgid "%m-%d-%Y"
+msgstr "%d. %m. %Y"
+
+#~ msgid "Invoice-{uid}.pdf"
+#~ msgstr "Faktura-{uid}.pdf"

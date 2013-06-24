@@ -137,8 +137,7 @@ class PdfExport(Export):
 
         if invoice.contractor_bank:
             textobject = canvas.beginText(11.5*cm, self.baseline)
-            for line in invoice.contractor_bank.as_text().split("\n"):
-                textobject.textLine(line)
+            textobject.textLine(_("Bank account: ") + invoice.contractor_bank.as_text())
             textobject.textLine(u"{0}: {1}".format(_('Variable symbol'), invoice.id))
             canvas.drawText(textobject)
 
