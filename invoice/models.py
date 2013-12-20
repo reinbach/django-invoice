@@ -12,64 +12,14 @@ from email.mime.application import MIMEApplication
 from django.db import models
 from django.conf import settings
 from django.http.response import HttpResponse
-from django.template import Template, Context
 from django.utils.encoding import python_2_unicode_compatible, smart_text
 from django.utils.translation import ugettext as _
 
 from invoice.utils import format_currency, load_class
-from invoice.export import PdfExport
 
 Address = load_class(getattr(settings, 'INVOICE_ADDRESS_MODEL', 'invoice.modelbases.Address'))
 BankAccount = load_class(getattr(settings, 'INVOICE_BANK_ACCOUNT_MODEL', 'invoice.modelbases.BankAccount'))
-
-
-@python_2_unicode_compatible
-class InvoiceSetting(models.Model):
-    '''The class modifies texts and appearance of generated invoice.
-    Automatically the first style will be used for every invoice if
-    you don't assign another settings into `instance.settings`.
-    If you don't want to use these settings just don't create any.
-    '''
-    STYLE_CHOICES = (
-        ('bold', _("Bold")),
-        ('italic', _("Italic")),
-    )
-    name = models.CharField(max_length=20, help_text=_('For your internal identification'))
-    info_text = models.TextField(help_text=_("The text will be rendered as a template above ITEMS part. "
-                                             "You have `invoice` variable available here"))
-    footer_text = models.TextField(help_text=_("The text will be rendered as a template on the bottom of an invoice. "
-                                               "You have `invoice` variable available here"))
-    line_color = models.CommaSeparatedIntegerField(default="200,128,128", max_length=11,
-                                                   help_text=_('Three comma separated values <0, 255> (R,G,B values)'))
-
-    class Meta:
-        ordering = ['id', ]
-
-    def __str__(self):
-        return self.name
-
-    def info(self, context):
-        return Template(self.info_text).render(Context(context))
-
-    def footer(self, context):
-        return Template(self.footer_text).render(Context(context))
-
-    @property
-    def color(self):
-        colors = []
-        if not self.line_color:
-            return colors
-        try:
-            colors_str = self.line_color.split(",")
-            if len(colors_str) != 3:
-                return colors
-            for value in colors_str:
-                color = int(value)/256
-                if color < 0 or color > 1: raise ValueError("Color is not in interval 0, 256")
-                colors.append(color)
-        except ValueError:
-            return ()
-        return colors
+Export = load_class(getattr(settings, 'INVOICE_EXPORT_CLASS', 'invoice.exports.HtmlExport'))
 
 
 class InvoiceManager(models.Manager):
@@ -109,7 +59,7 @@ class Invoice(models.Model):
     modified = models.DateTimeField(auto_now=True, verbose_name=_('Last modified'))
 
     objects = InvoiceManager()
-    export = PdfExport()
+    export = Export()
 
     def __str__(self):
         return smart_text("{0} {1} {2}").format(self.state_text, _("nr."), self.id)
@@ -151,15 +101,16 @@ class Invoice(models.Model):
         return total
 
     def get_filename(self):
-        return _('{0}-{1}.pdf').format(self.state_text, self.id)
+        return _('{0}-{1}.{2}').format(self.state_text, self.id,
+            self.export.get_content_type().rsplit("/", 2)[1])
 
-    def get_settings(self):
-        if not hasattr(self, "settings"):
-            if InvoiceSetting.objects.count() >= 1:
-                setattr(self, "settings", InvoiceSetting.objects.all()[0])
-            else:
-                setattr(self, "settings", None)
-        return self.settings
+    def get_info(self):
+        """Returns (multiline) string with info printed below contractor"""
+        return None
+
+    def get_footer(self):
+        """Returns (multiline) string with info in footer"""
+        return None
 
     def export_file(self, basedir):
         filename = os.path.join(basedir, self.get_filename())
@@ -168,30 +119,31 @@ class Invoice(models.Model):
         fileio.close()
         return filename
 
-    def export_bytes(self, settings=None):
+    def export_bytes(self):
         stream = BytesIO()
         self.export.draw(self, stream)
         output = stream.getvalue()
         stream.close()
         return output
 
-    def export_attachment(self, settings=None):
+    def export_attachment(self):
         attachment = MIMEApplication(self.export_bytes())
         attachment.add_header("Content-Disposition", "attachment", filename=self.get_filename())
         return attachment
 
-    def export_response(self, settings=None):
+    def export_response(self):
         response = HttpResponse(content_type=self.export.get_content_type())
         response['Content-Disposition'] = 'attachment; filename="{0}"'.format(self.get_filename())
         response.write(self.export_bytes())
         return response
 
 
+@python_2_unicode_compatible
 class InvoiceItem(models.Model):
     invoice = models.ForeignKey(Invoice, related_name='items', unique=False)
     description = models.CharField(max_length=100)
-    unit_price = models.DecimalField(max_digits=8, decimal_places=2)
-    quantity = models.DecimalField(max_digits=8, decimal_places=2, default=1)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=1)
 
     class Meta:
         ordering = ['unit_price']
@@ -200,5 +152,5 @@ class InvoiceItem(models.Model):
         total = Decimal(str(self.unit_price * self.quantity))
         return total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.description

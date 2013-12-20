@@ -10,6 +10,7 @@ setup(
     packages=[
         'invoice',
         'invoice.utils',
+        'invoice.exports',
         'invoice.test_data'
     ],
     include_package_data=True,
@@ -22,6 +23,5 @@ setup(
 
     install_requires=[
         "django>=1.3",
-        "reportlab",
     ],
 )

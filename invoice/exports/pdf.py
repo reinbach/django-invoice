@@ -1,4 +1,3 @@
-# coding: utf-8
 from os.path import abspath, dirname, join
 
 from reportlab.pdfbase import pdfmetrics
@@ -13,19 +12,10 @@ from django.utils.translation import ugettext as _
 from django.utils.encoding import smart_text
 
 from invoice.utils import format_currency, format_date
+from invoice.exports import Export
+
 
 STATIC_DIR = join(dirname(abspath(__file__)), "static", "invoice")
-
-
-class Export(object):
-    """Base exporter class"""
-
-    def get_content_type(self):
-        """Returns MIME string of generated format"""
-        raise NotImplementedError('Call to abstract method get_content_type')
-
-    def draw(self, invoice, stream):
-        raise NotImplementedError('Call to abstract method draw')
 
 
 class PdfExport(Export):
@@ -89,8 +79,6 @@ class PdfExport(Export):
         canvas.setLineWidth(3)
         self.baseline -= 0.3*cm
         colors = (0.9, 0.5, 0.2)
-        if invoice.get_settings():
-            colors = invoice.get_settings().color or colors
         canvas.setStrokeColorRGB(*colors)
         canvas.line(1.5*cm, self.baseline, (21 - 1.5)*cm, self.baseline)
         self.baseline -= 1*cm
@@ -113,7 +101,12 @@ class PdfExport(Export):
         canvas.setFillColorRGB(0.5, 0.5, 0.5)
         canvas.drawString(11.5*cm, self.baseline, _("The Contractor"))
         if invoice.logo:
-            canvas.drawInlineImage(invoice.logo, (21-1.5-3)*cm, self.baseline - 1.6*cm, 2*cm, 2*cm, True)
+            try:
+                canvas.drawInlineImage(invoice.logo, (21-1.5-3)*cm,
+                    self.baseline - 1.6*cm, 2*cm, 2*cm, True)
+            except AttributeError:
+                canvas.drawImage(invoice.logo, (21-1.5-3)*cm,
+                    self.baseline - 1.6*cm, 2*cm, 2*cm, True)
 
         canvas.setFont(self.FONT_NAME, 11)
         canvas.setFillColorRGB(0, 0, 0)
@@ -142,11 +135,11 @@ class PdfExport(Export):
             canvas.drawText(textobject)
 
         self.baseline -= 1.5*cm
-        if invoice.get_settings():
+        if invoice.get_info():
             lines = 0
             canvas.setFontSize(9)
             textobject = canvas.beginText(1.5*cm, self.baseline)
-            for line in invoice.get_settings().info({"invoice": invoice}).split("\n"):
+            for line in invoice.get_info().split("\n"):
                 lines += 1
                 textobject.textLine(line.strip())
             canvas.drawText(textobject)
@@ -179,8 +172,8 @@ class PdfExport(Export):
 
     def draw_footer(self, invoice, canvas):
         """ Draws the invoice footer """
-        if invoice.get_settings():
+        if invoice.get_footer():
             textobject = canvas.beginText(1.5*cm, self.baseline)
-            for line in invoice.get_settings().footer({"invoice": invoice}).split("\n"):
+            for line in invoice.get_footer().split("\n"):
                 textobject.textLine(line.strip())
             canvas.drawText(textobject)

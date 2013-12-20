@@ -7,7 +7,7 @@ General purpose invoicing app.
 
 This app provides simple (but sufficient) Invoice model with export abilities.
 The default export is into PDF but it's easy to write and use your own. The app is 
-python 3 comptibilite, has full unicode fonts and ability to use company logo.
+python 3 compatible, has full unicode fonts and ability to use company logo.
 
 The model provides an option to use your own Address model via setting `INVOICE_ADDRESS_MODEL`
 and Bank Account model via `INVOICE_BANK_ACCOUNT_MODEL`. Both settings the has to be a string
@@ -15,7 +15,7 @@ with full class name (e.g. "myproject.core.models.CompanyInformation").
 The only rule for custom models is that it has to have a method `as_text` which returns unicode 
 string with newline separators `\n`. Addresses will be used as contractor and subscriber. 
 
-If BankAccount reference is presented, then it will be rendered below contractor information with
+If BankAccount reference is presented then it will be rendered below contractor information with
 *Variable symbol: {{ invoice.id }}*.
 
 The invoice is intended to be referenced via foreign key from another model which handles
@@ -33,7 +33,7 @@ Invoice has some interesting methods:
 **invoice.export_attachment()** - returns MIMEApplication usable in email ::
 
     email = EmailMessage(to=[email, ], subject="Invoice", text="Hello")
-    email.atttach(invoice.export_attachment())
+    email.attach(invoice.export_attachment())
     email.send()
 
 Here we provide an example invoice generated from test
@@ -44,12 +44,15 @@ Here we provide an example invoice generated from test
 
 
 
-Export module
+Exports module
 -------------
 
-Provides base class `Export` for custom exporters. Also includes a `PDFExport` class which is
-the default export class in Invoice model. The exporter instance is stored as class attribute
-in `Invoice.export`. One can modify this attribute to substitue it's own exporter.
+Provides base class `Export` for overriding and `HtmlExport` class which is the
+default exporter.
+You can find class `PdfExport` in `exporters.pdf` which needs reportlab fot it's
+functionality. Unfortunately the reportlab is not python3 compatible.
+The exporter instance is stored as class attribute in `Invoice.exports`.
+One can modify this attribute to substitute it's own exporter.
 All Invoice's methods `export_*` will be functional the same. Here is a example ::
 
     from myproject import MyExporter
@@ -62,27 +65,13 @@ All Invoice's methods `export_*` will be functional the same. Here is a example 
     email.send()
 
 
-Invoice Setting
----------------
-
-There is simple dynamic way how to customize exported invoice. It is InvoiceSetting model.
-It provides way how to change footer text and add some legal information above table of items.
-It is also capable of changing the first line color.
-
-If there are no settings in the DB, the text places will remain empty, so there is no need to
-create settings if you don't want to. On the other hand there is possibility to have  many
-settings for different customers. You can swap them dynamically via ::
-
-    invoice.settings = InvoiceSetting.objects.get(name="For special customer")
-
-
-
 TestApp
 -------
 We provide an example project. For running you need just django, reportlab and PIL installed.
 
-There is currently only the admin interface which allows you to try to make your own InvoiceSetting
-and export invoice PDF from it via admin action. Don't forget to syncdb first.
+There is currently only the admin interface which allows you to try to make your
+own Invoices and export them via admin action. If you want to play with the 
+admin, don't forget to syncdb first.
 
 You can run tests from this example app. You can run the test ::
 

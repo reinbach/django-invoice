@@ -1,8 +1,10 @@
 from django.db.models.signals import post_syncdb
 from django.dispatch import receiver
-import invoice
+
+from invoice import models
+from invoice import test_data
 
 
-@receiver(post_syncdb, sender=invoice.models)
-def test_data(sender, **kwargs):
-    invoice.test_data.load()
+@receiver(post_syncdb, sender=models)
+def load_test_data(sender, **kwargs):
+    test_data.load()
