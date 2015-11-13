@@ -13,6 +13,7 @@ from django.db import models
 from django.conf import settings
 from django.http.response import HttpResponse
 from django.utils.encoding import python_2_unicode_compatible, smart_text
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
 from invoice.utils import format_currency, load_class
@@ -93,6 +94,7 @@ class Invoice(models.Model):
         '''Returns total as formated string'''
         return format_currency(self.total())
 
+    @cached_property
     def total(self):
         '''Computes total price using all items as decimal number'''
         total = Decimal('0.00')
