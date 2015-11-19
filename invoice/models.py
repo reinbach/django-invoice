@@ -18,9 +18,20 @@ from django.utils.translation import ugettext as _
 
 from invoice.utils import format_currency, load_class
 
-Address = load_class(getattr(settings, 'INVOICE_ADDRESS_MODEL', 'invoice.modelbases.Address'))
-BankAccount = load_class(getattr(settings, 'INVOICE_BANK_ACCOUNT_MODEL', 'invoice.modelbases.BankAccount'))
-Export = load_class(getattr(settings, 'INVOICE_EXPORT_CLASS', 'invoice.exports.HtmlExport'))
+DEFAULT_ADDRESS_MODEL = 'invoice.Address'
+DEFAULT_BANKACCOUNT_MODEL = 'invoice.BankAccount'
+
+Address = getattr(settings, 'INVOICE_ADDRESS_MODEL', DEFAULT_ADDRESS_MODEL)
+BankAccount = getattr(settings, 'INVOICE_BANK_ACCOUNT_MODEL', DEFAULT_BANKACCOUNT_MODEL)
+ExportClass = load_class(getattr(settings, 'INVOICE_EXPORT_CLASS', 'invoice.exports.HtmlExport'))
+
+
+# let concrete models to be created if the app uses default models for Address resp. BankAccount
+if Address == DEFAULT_ADDRESS_MODEL:
+    from .modelbases import Address
+
+if BankAccount == DEFAULT_BANKACCOUNT_MODEL:
+    from .modelbases import BankAccount
 
 
 class InvoiceManager(models.Manager):
@@ -30,6 +41,10 @@ class InvoiceManager(models.Manager):
                     .filter(date_issuance__lte=date.today())
                     .filter(date_paid__isnull=True)
                 )
+
+
+def in_14_days():
+    return date.today() + timedelta(days=14)
 
 
 @python_2_unicode_compatible
@@ -53,14 +68,14 @@ class Invoice(models.Model):
     state = models.CharField(max_length=15, choices=INVOICE_STATES, default=STATE_PROFORMA)
 
     date_issuance = models.DateField(default=date.today)
-    date_due = models.DateField(default=lambda: date.today() + timedelta(days=14))
+    date_due = models.DateField(default=in_14_days)
     date_paid = models.DateField(blank=True, null=True)
 
     created = models.DateTimeField(auto_now_add=True, verbose_name=_('Date added'))
     modified = models.DateTimeField(auto_now=True, verbose_name=_('Last modified'))
 
     objects = InvoiceManager()
-    export = Export()
+    export = ExportClass()
 
     def __str__(self):
         return smart_text("{0} {1} {2}").format(self.state_text, _("nr."), self.id)
@@ -142,7 +157,7 @@ class Invoice(models.Model):
 
 @python_2_unicode_compatible
 class InvoiceItem(models.Model):
-    invoice = models.ForeignKey(Invoice, related_name='items', unique=False)
+    invoice = models.ForeignKey('Invoice', related_name='items', unique=False)
     description = models.CharField(max_length=100)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.DecimalField(max_digits=10, decimal_places=2, default=1)
