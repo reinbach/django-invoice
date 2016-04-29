@@ -14,24 +14,77 @@ from django.conf import settings
 from django.http.response import HttpResponse
 from django.utils.encoding import python_2_unicode_compatible, smart_text
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from invoice.utils import format_currency, load_class
 
 DEFAULT_ADDRESS_MODEL = 'invoice.Address'
 DEFAULT_BANKACCOUNT_MODEL = 'invoice.BankAccount'
 
-Address = getattr(settings, 'INVOICE_ADDRESS_MODEL', DEFAULT_ADDRESS_MODEL)
-BankAccount = getattr(settings, 'INVOICE_BANK_ACCOUNT_MODEL', DEFAULT_BANKACCOUNT_MODEL)
+AddressModel = getattr(settings, 'INVOICE_ADDRESS_MODEL', DEFAULT_ADDRESS_MODEL)
+BankAccountModel = getattr(settings, 'INVOICE_BANK_ACCOUNT_MODEL', DEFAULT_BANKACCOUNT_MODEL)
 ExportClass = load_class(getattr(settings, 'INVOICE_EXPORT_CLASS', 'invoice.exports.HtmlExport'))
 
 
-# let concrete models to be created if the app uses default models for Address resp. BankAccount
-if Address == DEFAULT_ADDRESS_MODEL:
-    from .modelbases import Address
+@python_2_unicode_compatible
+class Address(models.Model):
 
-if BankAccount == DEFAULT_BANKACCOUNT_MODEL:
-    from .modelbases import BankAccount
+    name = models.CharField(max_length=60)
+    street = models.CharField(max_length=60)
+    town = models.CharField(max_length=60)
+    postcode = models.CharField(max_length=10)
+    country = models.CharField(max_length=20)
+
+    business_id = models.CharField(_("Business ID"), max_length=12, null=True, blank=True)
+    tax_id = models.CharField(_("Tax ID"), max_length=15, null=True, blank=True)
+
+    extra = models.TextField(null=True, blank=True)
+
+    class Meta:
+        app_label = "invoice"
+        verbose_name_plural = _("Addresses")
+
+    def __str__(self):
+        return u"{0}, {1}".format(self.name, self.street)
+
+    def as_text(self):
+        self_dict = model_to_dict(self)
+        base = (u"{name}\n"
+                u"{street}\n"
+                u"{postcode} {town}".format(**self_dict))
+
+        if self.business_id:
+            business_info = u"{0}: {1}".format(_("Reg No"), self.business_id)
+            tax_info = u"{0}: {1}".format(_("Tax No"), self.tax_id)
+            base = u"\n".join((base, business_info, tax_info))
+
+        if self.extra:
+            base = u"\n\n".join((base, self.extra))
+
+        return base
+
+
+@python_2_unicode_compatible
+class BankAccount(models.Model):
+    '''Bank account. Mandatory for SHOP'''
+    prefix = models.DecimalField(_('Prefix'), null=True, blank=True,
+                                 max_digits=15, decimal_places=0)
+    number = models.DecimalField(_('Account number'), decimal_places=0,
+                                 max_digits=16)
+    bank = models.DecimalField(_('Bank code'), decimal_places=0, max_digits=4)
+
+    class Meta:
+        app_label = _("invoice")
+        verbose_name = _("bank account")
+
+    def __str__(self):
+        if not self.prefix:
+            return u"{0} / {1}".format(self.number, self.bank)
+        return u"{0} - {1} / {2}".format(self.prefix, self.number, self.bank)
+
+    def as_text(self):
+        return u"{0}: {1}".format(_("Bank account"), smart_text(self))
+
 
 
 class InvoiceManager(models.Manager):
@@ -57,12 +110,12 @@ class Invoice(models.Model):
     )
 
     uid = models.CharField(unique=True, max_length=10, blank=True)
-    contractor = models.ForeignKey(Address, related_name='+')
-    contractor_bank = models.ForeignKey(BankAccount, related_name='+', db_index=False,
+    contractor = models.ForeignKey(AddressModel, related_name='+')
+    contractor_bank = models.ForeignKey(BankAccountModel, related_name='+', db_index=False,
                                         null=True, blank=True)
 
-    subscriber = models.ForeignKey(Address, related_name='+')
-    subscriber_shipping = models.ForeignKey(Address, related_name='+', db_index=False,
+    subscriber = models.ForeignKey(AddressModel, related_name='+')
+    subscriber_shipping = models.ForeignKey(AddressModel, related_name='+', db_index=False,
                                             null=True, blank=True)
     logo = models.FilePathField(match=".*(png|jpg|jpeg|svg)", null=True, blank=True)
     state = models.CharField(max_length=15, choices=INVOICE_STATES, default=STATE_PROFORMA)
@@ -81,6 +134,8 @@ class Invoice(models.Model):
         return smart_text("{0} {1} {2}").format(self.state_text, _("nr."), self.id)
 
     class Meta:
+        app_label = "invoice"
+        verbose_name = _('invoice')
         ordering = ('-date_issuance', 'id')
 
     def save(self, *args, **kwargs):
@@ -102,8 +157,9 @@ class Invoice(models.Model):
         self.save()
 
     def add_item(self, description, price, quantity=1):
-        InvoiceItem.objects.create(invoice=self, description=description,
-                                   unit_price=price, quantity=quantity)
+        if description is not None and price is not None:
+            InvoiceItem.objects.create(invoice=self, description=description,
+                                       unit_price=price, quantity=quantity)
 
     def total_amount(self):
         '''Returns total as formated string'''
@@ -117,8 +173,9 @@ class Invoice(models.Model):
             total = total + item.total()
         return total
 
-    def get_filename(self):
-        return _('{0}-{1}.{2}').format(self.state_text, self.id,
+    @property
+    def filename(self):
+        return "{0}-{1}.{2}".format(self.state_text, self.id,
             self.export.get_content_type().rsplit("/", 2)[1])
 
     def get_info(self):
@@ -130,7 +187,7 @@ class Invoice(models.Model):
         return None
 
     def export_file(self, basedir):
-        filename = os.path.join(basedir, self.get_filename())
+        filename = os.path.join(basedir, self.filename)
         fileio = FileIO(filename, "w")
         self.export.draw(self, fileio)
         fileio.close()
@@ -145,12 +202,12 @@ class Invoice(models.Model):
 
     def export_attachment(self):
         attachment = MIMEApplication(self.export_bytes())
-        attachment.add_header("Content-Disposition", "attachment", filename=self.get_filename())
+        attachment.add_header("Content-Disposition", "attachment", filename=self.filename)
         return attachment
 
     def export_response(self):
         response = HttpResponse(content_type=self.export.get_content_type())
-        response['Content-Disposition'] = 'attachment; filename="{0}"'.format(self.get_filename())
+        response['Content-Disposition'] = 'attachment; filename="{0}"'.format(self.filename)
         response.write(self.export_bytes())
         return response
 
@@ -163,6 +220,8 @@ class InvoiceItem(models.Model):
     quantity = models.DecimalField(max_digits=10, decimal_places=2, default=1)
 
     class Meta:
+        app_label = "invoice"
+        verbose_name = _("invoice item")
         ordering = ['unit_price']
 
     def total(self):
