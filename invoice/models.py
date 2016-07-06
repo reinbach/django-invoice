@@ -5,16 +5,21 @@ import random
 import string
 
 from io import FileIO, BytesIO
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from email.mime.application import MIMEApplication
 
 from django.db import models
 from django.conf import settings
+from django.forms.models import model_to_dict
 from django.http.response import HttpResponse
 from django.utils.encoding import python_2_unicode_compatible, smart_text
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.timezone import now
+from django.utils.translation import (
+    ugettext_lazy as lazy_,
+    ugettext as _
+)
 
 from invoice.utils import format_currency, load_class
 
@@ -28,6 +33,7 @@ ExportClass = load_class(getattr(settings, 'INVOICE_EXPORT_CLASS', 'invoice.expo
 
 @python_2_unicode_compatible
 class Address(models.Model):
+    """Address to be printed to Invoice - the method `as_text` is mandatory."""
 
     name = models.CharField(max_length=60)
     street = models.CharField(max_length=60)
@@ -42,7 +48,7 @@ class Address(models.Model):
 
     class Meta:
         app_label = "invoice"
-        verbose_name_plural = _("Addresses")
+        verbose_name_plural = lazy_("Addresses")
 
     def __str__(self):
         return u"{0}, {1}".format(self.name, self.street)
@@ -74,8 +80,8 @@ class BankAccount(models.Model):
     bank = models.DecimalField(_('Bank code'), decimal_places=0, max_digits=4)
 
     class Meta:
-        app_label = _("invoice")
-        verbose_name = _("bank account")
+        app_label = lazy_("invoice")
+        verbose_name = lazy_("bank account")
 
     def __str__(self):
         if not self.prefix:
@@ -91,13 +97,13 @@ class InvoiceManager(models.Manager):
 
     def get_due(self):
         return (self.get_query_set()
-                    .filter(date_issuance__lte=date.today())
+                    .filter(date_issuance__lte=now().date())
                     .filter(date_paid__isnull=True)
                 )
 
 
 def in_14_days():
-    return date.today() + timedelta(days=14)
+    return now().date() + timedelta(days=14)
 
 
 @python_2_unicode_compatible
@@ -120,7 +126,7 @@ class Invoice(models.Model):
     logo = models.FilePathField(match=".*(png|jpg|jpeg|svg)", null=True, blank=True)
     state = models.CharField(max_length=15, choices=INVOICE_STATES, default=STATE_PROFORMA)
 
-    date_issuance = models.DateField(default=date.today)
+    date_issuance = models.DateField(auto_now_add=True)
     date_due = models.DateField(default=in_14_days)
     date_paid = models.DateField(blank=True, null=True)
 
@@ -135,7 +141,7 @@ class Invoice(models.Model):
 
     class Meta:
         app_label = "invoice"
-        verbose_name = _('invoice')
+        verbose_name = lazy_('invoice')
         ordering = ('-date_issuance', 'id')
 
     def save(self, *args, **kwargs):
@@ -152,7 +158,7 @@ class Invoice(models.Model):
                 return state[1]
 
     def set_paid(self):
-        self.date_paid = date.today()
+        self.date_paid = now().date()
         self.state = self.STATE_INVOICE
         self.save()
 
@@ -167,7 +173,7 @@ class Invoice(models.Model):
 
     @cached_property
     def total(self):
-        '''Computes total price using all items as decimal number'''
+        '''Compute total price using all items as decimal number'''
         total = Decimal('0.00')
         for item in self.items.all():
             total = total + item.total()
@@ -175,15 +181,18 @@ class Invoice(models.Model):
 
     @property
     def filename(self):
-        return "{0}-{1}.{2}".format(self.state_text, self.id,
+        """Deduce unique filename for export."""
+        return "{0}-{1}.{2}".format(
+            self.state_text,
+            self.id,
             self.export.get_content_type().rsplit("/", 2)[1])
 
     def get_info(self):
-        """Returns (multiline) string with info printed below contractor"""
+        """Return (multiline) string with info printed below contractor."""
         return None
 
     def get_footer(self):
-        """Returns (multiline) string with info in footer"""
+        """Return (multiline) string with info in footer."""
         return None
 
     def export_file(self, basedir):
@@ -221,7 +230,7 @@ class InvoiceItem(models.Model):
 
     class Meta:
         app_label = "invoice"
-        verbose_name = _("invoice item")
+        verbose_name = lazy_("invoice item")
         ordering = ['unit_price']
 
     def total(self):
