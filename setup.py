@@ -1,7 +1,7 @@
 from setuptools import setup
 
 APP_NAME = "django-invoice"
-VERSION = '0.3.2'
+VERSION = '0.4.0'
 
 setup(
     name=APP_NAME,
@@ -22,6 +22,6 @@ setup(
     keywords="django invoice pdf",
 
     install_requires=[
-        "django>=1.3",
+        "django>=1.8",
     ],
 )
