@@ -15,7 +15,7 @@ from invoice.utils import format_currency, format_date
 from invoice.exports import Export
 
 
-STATIC_DIR = join(dirname(abspath(__file__)), "static", "invoice")
+STATIC_DIR = join(dirname(abspath(__file__)), "..", "static", "invoice")
 
 
 class PdfExport(Export):
@@ -153,9 +153,9 @@ class PdfExport(Export):
                 item.quantity,
                 item.description,
                 format_currency(item.unit_price),
-                format_currency(item.total())
+                format_currency(item.total)
             ])
-        data.append([u'', u'', _('Total') + u":", format_currency(invoice.total())])
+        data.append([u'', u'', _('Total') + u":", format_currency(invoice.total)])
         table = Table(data, colWidths=[1.7*cm, 11*cm, 2.5*cm, 2.5*cm])
         table.setStyle([
             ('FONT', (0, 0), (-1, -1), self.FONT_NAME),

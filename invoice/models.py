@@ -72,7 +72,7 @@ class Address(models.Model):
 
 @python_2_unicode_compatible
 class BankAccount(models.Model):
-    '''Bank account. Mandatory for SHOP'''
+    """Bank account. Mandatory for SHOP"""
     prefix = models.DecimalField(_('Prefix'), null=True, blank=True,
                                  max_digits=15, decimal_places=0)
     number = models.DecimalField(_('Account number'), decimal_places=0,
@@ -168,16 +168,16 @@ class Invoice(models.Model):
                                        unit_price=price, quantity=quantity)
 
     def total_amount(self):
-        '''Returns total as formated string'''
-        return format_currency(self.total())
+        """Return total as formated string."""
+        return format_currency(self.total)
 
     @cached_property
     def total(self):
-        '''Compute total price using all items as decimal number'''
-        total = Decimal('0.00')
+        """Compute total price using all items as decimal number."""
+        x = Decimal('0.00')
         for item in self.items.all():
-            total = total + item.total()
-        return total
+            x = x + item.total
+        return x
 
     @property
     def filename(self):
@@ -233,6 +233,7 @@ class InvoiceItem(models.Model):
         verbose_name = lazy_("invoice item")
         ordering = ['unit_price']
 
+    @property
     def total(self):
         total = Decimal(str(self.unit_price * self.quantity))
         return total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
