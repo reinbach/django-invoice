@@ -96,7 +96,7 @@ class BankAccount(models.Model):
 class InvoiceManager(models.Manager):
 
     def get_due(self):
-        return (self.get_query_set()
+        return (self.get_queryset()
                     .filter(date_issuance__lte=now().date())
                     .filter(date_paid__isnull=True)
                 )
