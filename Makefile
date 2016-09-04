@@ -23,8 +23,8 @@ develop:
 
 
 checks:
-	@pep8 . || true
-	@flake8 . || true
+	@pep8 invoice testapp tests || true
+	@flake8 invoice testapp tests || true
 
 
 test:
