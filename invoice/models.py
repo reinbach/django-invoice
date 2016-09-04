@@ -50,7 +50,6 @@ class Address(models.Model):
     town = models.CharField(max_length=60)
     postcode = models.CharField(max_length=10)
     country = models.CharField(max_length=20)
-
     business_id = models.CharField(
         _("Business ID"),
         max_length=12,
@@ -63,7 +62,6 @@ class Address(models.Model):
         null=True,
         blank=True
     )
-
     extra = models.TextField(null=True, blank=True)
 
     class Meta:
@@ -113,7 +111,6 @@ class BankAccount(models.Model):
 
 
 class InvoiceManager(models.Manager):
-
     def get_due(self):
         return (self.get_queryset()
                     .filter(date_issuance__lte=now().date())
