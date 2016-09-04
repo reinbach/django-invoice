@@ -28,7 +28,9 @@ class PdfExport(Export):
     def draw(self, invoice, stream):
         """ Draws the invoice """
         # embed unicode font
-        pdfmetrics.registerFont(TTFont('FreeSans', join(STATIC_DIR, 'FreeSans.ttf')))
+        pdfmetrics.registerFont(
+            TTFont('FreeSans', join(STATIC_DIR, 'FreeSans.ttf'))
+        )
         addMapping('FreeSans', 0, 0, 'FreeSans')
 
         self.baseline = -2*cm
@@ -75,7 +77,11 @@ class PdfExport(Export):
         canvas.setFillColorRGB(0.2, 0.2, 0.2)
         canvas.setFont(self.FONT_NAME, 16)
         canvas.drawString(2*cm, self.baseline, smart_text(invoice.state_text))
-        canvas.drawString((21-6)*cm, self.baseline, format_date(invoice.date_issuance))
+        canvas.drawString(
+            (21-6)*cm,
+            self.baseline,
+            format_date(invoice.date_issuance)
+        )
         canvas.setLineWidth(3)
         self.baseline -= 0.3*cm
         colors = (0.9, 0.5, 0.2)
@@ -102,11 +108,23 @@ class PdfExport(Export):
         canvas.drawString(11.5*cm, self.baseline, _("The Contractor"))
         if invoice.logo:
             try:
-                canvas.drawInlineImage(invoice.logo, (21-1.5-3)*cm,
-                    self.baseline - 1.6*cm, 2*cm, 2*cm, True)
+                canvas.drawInlineImage(
+                    invoice.logo,
+                    (21-1.5-3)*cm,
+                    self.baseline - 1.6*cm,
+                    2*cm,
+                    2*cm,
+                    True
+                )
             except AttributeError:
-                canvas.drawImage(invoice.logo, (21-1.5-3)*cm,
-                    self.baseline - 1.6*cm, 2*cm, 2*cm, True)
+                canvas.drawImage(
+                    invoice.logo,
+                    (21-1.5-3)*cm,
+                    self.baseline - 1.6*cm,
+                    2*cm,
+                    2*cm,
+                    True
+                )
 
         canvas.setFont(self.FONT_NAME, 11)
         canvas.setFillColorRGB(0, 0, 0)
@@ -124,14 +142,25 @@ class PdfExport(Export):
 
         self.baseline -= .7*cm
         textobject = canvas.beginText(1.5*cm, self.baseline)
-        textobject.textLine(u"{0}: {1}".format(_('Date issuance'), format_date(invoice.date_issuance)))
-        textobject.textLine(u"{0}: {1}".format(_('Due date'), format_date(invoice.date_due)))
+        textobject.textLine(u"{0}: {1}".format(
+            _('Date issuance'),
+            format_date(invoice.date_issuance))
+        )
+        textobject.textLine(u"{0}: {1}".format(
+            _('Due date'),
+            format_date(invoice.date_due))
+        )
         canvas.drawText(textobject)
 
         if invoice.contractor_bank:
             textobject = canvas.beginText(11.5*cm, self.baseline)
-            textobject.textLine(_("Bank account: ") + invoice.contractor_bank.as_text())
-            textobject.textLine(u"{0}: {1}".format(_('Variable symbol'), invoice.id))
+            textobject.textLine(
+                _("Bank account: ") + invoice.contractor_bank.as_text()
+            )
+            textobject.textLine(u"{0}: {1}".format(
+                _('Variable symbol'),
+                invoice.id
+            ))
             canvas.drawText(textobject)
 
         self.baseline -= 1.5*cm
@@ -155,7 +184,9 @@ class PdfExport(Export):
                 format_currency(item.unit_price),
                 format_currency(item.total)
             ])
-        data.append([u'', u'', _('Total') + u":", format_currency(invoice.total)])
+        data.append(
+            [u'', u'', _('Total') + u":", format_currency(invoice.total)]
+        )
         table = Table(data, colWidths=[1.7*cm, 11*cm, 2.5*cm, 2.5*cm])
         table.setStyle([
             ('FONT', (0, 0), (-1, -1), self.FONT_NAME),

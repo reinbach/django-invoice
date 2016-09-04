@@ -20,4 +20,8 @@ class HtmlExport(Export):
 
     def draw(self, invoice, stream):
         stream.write(
-            render_to_string("invoice/invoice.html", {"invoice": invoice}).encode("utf-8"))
+            render_to_string(
+                "invoice/invoice.html",
+                {"invoice": invoice}
+            ).encode("utf-8")
+        )

@@ -3,4 +3,7 @@ from invoice.models import Invoice
 
 
 def index(request):
-    return render_to_response("index.html", {"invoices": Invoice.objects.all()})
+    return render_to_response(
+        "index.html",
+        {"invoices": Invoice.objects.all()}
+    )

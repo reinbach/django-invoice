@@ -6,7 +6,7 @@ if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "testapp.settings")
 
     try:
-        import invoice
+        import invoice  # noqa
     except ImportError:
         # if the user didn't install the django-invoice app
         basedir = os.path.dirname(os.path.abspath(__file__))

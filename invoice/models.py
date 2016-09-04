@@ -26,9 +26,19 @@ from invoice.utils import format_currency, load_class
 DEFAULT_ADDRESS_MODEL = 'invoice.Address'
 DEFAULT_BANKACCOUNT_MODEL = 'invoice.BankAccount'
 
-AddressModel = getattr(settings, 'INVOICE_ADDRESS_MODEL', DEFAULT_ADDRESS_MODEL)
-BankAccountModel = getattr(settings, 'INVOICE_BANK_ACCOUNT_MODEL', DEFAULT_BANKACCOUNT_MODEL)
-ExportClass = load_class(getattr(settings, 'INVOICE_EXPORT_CLASS', 'invoice.exports.HtmlExport'))
+AddressModel = getattr(
+    settings,
+    'INVOICE_ADDRESS_MODEL',
+    DEFAULT_ADDRESS_MODEL
+)
+BankAccountModel = getattr(
+    settings,
+    'INVOICE_BANK_ACCOUNT_MODEL',
+    DEFAULT_BANKACCOUNT_MODEL
+)
+ExportClass = load_class(
+    getattr(settings, 'INVOICE_EXPORT_CLASS', 'invoice.exports.HtmlExport')
+)
 
 
 @python_2_unicode_compatible
@@ -41,8 +51,18 @@ class Address(models.Model):
     postcode = models.CharField(max_length=10)
     country = models.CharField(max_length=20)
 
-    business_id = models.CharField(_("Business ID"), max_length=12, null=True, blank=True)
-    tax_id = models.CharField(_("Tax ID"), max_length=15, null=True, blank=True)
+    business_id = models.CharField(
+        _("Business ID"),
+        max_length=12,
+        null=True,
+        blank=True
+    )
+    tax_id = models.CharField(
+        _("Tax ID"),
+        max_length=15,
+        null=True,
+        blank=True
+    )
 
     extra = models.TextField(null=True, blank=True)
 
@@ -92,7 +112,6 @@ class BankAccount(models.Model):
         return u"{0}: {1}".format(_("Bank account"), smart_text(self))
 
 
-
 class InvoiceManager(models.Manager):
 
     def get_due(self):
@@ -117,27 +136,55 @@ class Invoice(models.Model):
 
     uid = models.CharField(unique=True, max_length=10, blank=True)
     contractor = models.ForeignKey(AddressModel, related_name='+')
-    contractor_bank = models.ForeignKey(BankAccountModel, related_name='+', db_index=False,
-                                        null=True, blank=True)
+    contractor_bank = models.ForeignKey(
+        BankAccountModel,
+        related_name='+',
+        db_index=False,
+        null=True,
+        blank=True
+    )
 
     subscriber = models.ForeignKey(AddressModel, related_name='+')
-    subscriber_shipping = models.ForeignKey(AddressModel, related_name='+', db_index=False,
-                                            null=True, blank=True)
-    logo = models.FilePathField(match=".*(png|jpg|jpeg|svg)", null=True, blank=True)
-    state = models.CharField(max_length=15, choices=INVOICE_STATES, default=STATE_PROFORMA)
+    subscriber_shipping = models.ForeignKey(
+        AddressModel,
+        related_name='+',
+        db_index=False,
+        null=True,
+        blank=True
+    )
+    logo = models.FilePathField(
+        match=".*(png|jpg|jpeg|svg)",
+        null=True,
+        blank=True
+    )
+    state = models.CharField(
+        max_length=15,
+        choices=INVOICE_STATES,
+        default=STATE_PROFORMA
+    )
 
     date_issuance = models.DateField(auto_now_add=True)
     date_due = models.DateField(default=in_14_days)
     date_paid = models.DateField(blank=True, null=True)
 
-    created = models.DateTimeField(auto_now_add=True, verbose_name=_('Date added'))
-    modified = models.DateTimeField(auto_now=True, verbose_name=_('Last modified'))
+    created = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Date added')
+    )
+    modified = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_('Last modified')
+    )
 
     objects = InvoiceManager()
     export = ExportClass()
 
     def __str__(self):
-        return smart_text("{0} {1} {2}").format(self.state_text, _("nr."), self.id)
+        return smart_text("{0} {1} {2}").format(
+            self.state_text,
+            _("nr."),
+            self.id
+        )
 
     class Meta:
         app_label = "invoice"
@@ -146,9 +193,13 @@ class Invoice(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.uid:
-            self.uid = "".join(random.sample(string.ascii_letters + string.digits, 8))
+            self.uid = "".join(random.sample(
+                string.ascii_letters + string.digits, 8)
+            )
             while self.__class__.objects.filter(uid=self.uid).exists():
-                self.uid = "".join(random.sample(string.ascii_letters + string.digits, 8))
+                self.uid = "".join(
+                    random.sample(string.ascii_letters + string.digits, 8)
+                )
         return super(Invoice, self).save(*args, **kwargs)
 
     @property
@@ -211,12 +262,18 @@ class Invoice(models.Model):
 
     def export_attachment(self):
         attachment = MIMEApplication(self.export_bytes())
-        attachment.add_header("Content-Disposition", "attachment", filename=self.filename)
+        attachment.add_header(
+            "Content-Disposition",
+            "attachment",
+            filename=self.filename
+        )
         return attachment
 
     def export_response(self):
         response = HttpResponse(content_type=self.export.get_content_type())
-        response['Content-Disposition'] = 'attachment; filename="{0}"'.format(self.filename)
+        response['Content-Disposition'] = 'attachment; filename="{0}"'.format(
+            self.filename
+        )
         response.write(self.export_bytes())
         return response
 

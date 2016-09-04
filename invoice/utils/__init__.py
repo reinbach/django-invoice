@@ -44,8 +44,10 @@ def load_class(class_path, setting_name=None):
         clazz = getattr(mod, class_name)
     except AttributeError:
         if setting_name:
-            txt = ('Backend module "%s" does not define a "%s" class. Check'
-                   ' your %s setting' % (class_module, class_name, setting_name))
+            txt = (
+                'Backend module "%s" does not define a "%s" class. Check'
+                ' your %s setting' % (class_module, class_name, setting_name)
+            )
         else:
             txt = 'Backend module "%s" does not define a "%s" class.' % (
                 class_module, class_name)

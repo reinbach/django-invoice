@@ -17,9 +17,12 @@ def invoice():
             country=u"Sweden",
             business_id="523489473",
             tax_id="US092748793",
-            extra=('Phone: 076-577-9284\n'
-                    'Email: boss@example.com')
-    ))
+            extra=(
+                'Phone: 076-577-9284\n'
+                'Email: boss@example.com'
+            )
+        )
+    )
 
     subscriber, created = (Address.objects.get_or_create(
         name=u'Tomáš Peterka',
@@ -29,7 +32,8 @@ def invoice():
             postcode='142 00',
             country=u"Czech Republic",
             extra="Email: atheiste@seznam.cz"
-    )))
+        )
+    ))
 
     account, created = BankAccount.objects.get_or_create(
         number=782634210, bank=6250)
