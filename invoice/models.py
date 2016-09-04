@@ -174,17 +174,17 @@ class Invoice(models.Model):
     objects = InvoiceManager()
     export = ExportClass()
 
-    def __str__(self):
-        return smart_text("{0} {1} {2}").format(
-            self.state_text,
-            _("nr."),
-            self.id
-        )
-
     class Meta:
         app_label = "invoice"
         verbose_name = lazy_('invoice')
         ordering = ('-date_issuance', 'id')
+
+    def __str__(self):
+        return smart_text("{0} {1} {2}").format(
+            self.get_state_display(),
+            _("nr."),
+            self.id
+        )
 
     def save(self, *args, **kwargs):
         if not self.uid:
@@ -196,12 +196,6 @@ class Invoice(models.Model):
                     random.sample(string.ascii_letters + string.digits, 8)
                 )
         return super(Invoice, self).save(*args, **kwargs)
-
-    @property
-    def state_text(self):
-        for state in self.INVOICE_STATES:
-            if state[0] == self.state:
-                return state[1]
 
     def set_paid(self):
         self.date_paid = now().date()
@@ -229,7 +223,7 @@ class Invoice(models.Model):
     def filename(self):
         """Deduce unique filename for export."""
         return "{0}-{1}.{2}".format(
-            self.state_text,
+            self.get_state_display(),
             self.id,
             self.export.get_content_type().rsplit("/", 2)[1])
 

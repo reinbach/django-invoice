@@ -76,7 +76,11 @@ class PdfExport(Export):
         """ Draws the invoice header """
         canvas.setFillColorRGB(0.2, 0.2, 0.2)
         canvas.setFont(self.FONT_NAME, 16)
-        canvas.drawString(2*cm, self.baseline, smart_text(invoice.state_text))
+        canvas.drawString(
+            2*cm,
+            self.baseline,
+            smart_text(invoice.get_state_display())
+        )
         canvas.drawString(
             (21-6)*cm,
             self.baseline,
