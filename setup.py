@@ -1,27 +1,32 @@
-from setuptools import setup
+import codecs
+import os
+
+from setuptools import setup, find_packages
 
 APP_NAME = "django-invoice"
-VERSION = '0.4.0'
+VERSION = __import__('invoice').get_version()
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+
+def read(*files):
+    content = ''
+    for f in files:
+        content += codecs.open(os.path.join(here, f), 'r').read()
+    return content
+
 
 setup(
     name=APP_NAME,
     version=VERSION,
-    description='Pluggable django invoicing app',
-    packages=[
-        'invoice',
-        'invoice.utils',
-        'invoice.exports',
-        'invoice.test_data'
-    ],
-    include_package_data=True,
-
     author='Tomas Peterka',
     author_email='prestizni@gmail.com',
-    license="GPL v3",
     url='http://pypi.python.org/pypi/{0}/'.format(APP_NAME),
     keywords="django invoice pdf",
-
-    install_requires=[
-        "django>=1.8",
-    ],
+    description='Pluggable django invoicing app',
+    long_description=read("README.rst"),
+    install_requires=read('requirements/base.txt'),
+    tests_require=read('requirements/qa.txt'),
+    packages=find_packages(),
+    license="GPL v3",
 )
