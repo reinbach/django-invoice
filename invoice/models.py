@@ -50,19 +50,9 @@ class Address(models.Model):
     town = models.CharField(max_length=60)
     postcode = models.CharField(max_length=10)
     country = models.CharField(max_length=20)
-    business_id = models.CharField(
-        _("Business ID"),
-        max_length=12,
-        null=True,
-        blank=True
-    )
-    tax_id = models.CharField(
-        _("Tax ID"),
-        max_length=15,
-        null=True,
-        blank=True
-    )
-    extra = models.TextField(null=True, blank=True)
+    business_id = models.CharField(_("Business ID"), max_length=12, blank=True)
+    tax_id = models.CharField(_("Tax ID"), max_length=15, blank=True)
+    extra = models.TextField(blank=True)
 
     class Meta:
         app_label = "invoice"
@@ -91,10 +81,17 @@ class Address(models.Model):
 @python_2_unicode_compatible
 class BankAccount(models.Model):
     """Bank account. Mandatory for SHOP"""
-    prefix = models.DecimalField(_('Prefix'), null=True, blank=True,
-                                 max_digits=15, decimal_places=0)
-    number = models.DecimalField(_('Account number'), decimal_places=0,
-                                 max_digits=16)
+    prefix = models.DecimalField(
+        _('Prefix'),
+        blank=True,
+        max_digits=15,
+        decimal_places=0
+    )
+    number = models.DecimalField(
+        _('Account number'),
+        decimal_places=0,
+        max_digits=16
+    )
     bank = models.DecimalField(_('Bank code'), decimal_places=0, max_digits=4)
 
     class Meta:
@@ -112,10 +109,11 @@ class BankAccount(models.Model):
 
 class InvoiceManager(models.Manager):
     def get_due(self):
-        return (self.get_queryset()
-                    .filter(date_issuance__lte=now().date())
-                    .filter(date_paid__isnull=True)
-                )
+        return (
+            self.get_queryset()
+            .filter(date_issuance__lte=now().date())
+            .filter(date_paid__isnull=True)
+        )
 
 
 def in_14_days():
