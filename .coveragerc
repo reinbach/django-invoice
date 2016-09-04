@@ -5,6 +5,7 @@ include =
 
 omit =  **/requirements/**
         **/tests/**
+        **/migrations/**
 
 [report]
 # Regexes for lines to exclude from consideration
