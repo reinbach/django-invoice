@@ -16,7 +16,7 @@ def load():
             tax_id="US092748793",
             extra=('Phone: 076-577-9284\n'
                     'Email: boss@example.com')
-    )))
+    ))
 
     subscriber, created = (Address.objects.get_or_create(
         name=u'Tomáš Peterka',
