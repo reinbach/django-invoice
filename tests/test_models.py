@@ -5,8 +5,11 @@ import os
 import pytest
 
 from decimal import Decimal
+from django.http import HttpResponse
 from django.utils.timezone import now
+from email.mime.application import MIMEApplication
 from invoice.models import Address, BankAccount, Invoice, InvoiceItem
+from invoice.utils import format_currency
 
 
 class TestAddress:
@@ -79,23 +82,19 @@ class TestInvoiceManager:
 
 @pytest.mark.django_db
 class TestInvoice:
+    def test_str_none(self):
+        i = Invoice(state=Invoice.STATE_PROFORMA)
+        assert str(i) == "Proforma nr. None"
+
+    def test_str(self, invoice):
+        assert str(invoice) == "Proforma nr. {}".format(invoice.pk)
+
     def test_set_paid(self, invoice):
         assert invoice.state == Invoice.STATE_PROFORMA
         assert invoice.date_paid is None
         invoice.set_paid()
         assert invoice.state == Invoice.STATE_INVOICE
         assert invoice.date_paid is not None
-
-    def test_generate_file(self, invoice):
-        basedir = "/tmp"
-        if invoice.logo:
-            assert os.path.exists(invoice.logo) is True
-        filename = invoice.export_file(basedir)
-        assert os.path.exists(filename) is True
-        stats = os.stat(filename)
-        # the file has to contain something
-        assert stats.st_size > 10
-        os.unlink(filename)
 
     def test_add_item(self, invoice):
         item_count = InvoiceItem.objects.all().count()
@@ -120,3 +119,53 @@ class TestInvoice:
         item = invoice.add_item(None, "10.00")
         assert item is None
         InvoiceItem.objects.all().count() == item_count
+
+    def test_total_amount(self, invoice):
+        assert invoice.total_amount() == format_currency(1005504.49)
+
+    def test_total(self, invoice):
+        assert invoice.total == Decimal("1005504.49")
+
+    def test_file_name(self, invoice):
+        assert invoice.filename == "Proforma-{}.html".format(invoice.pk)
+
+    def test_get_info(self):
+        i = Invoice()
+        assert i.get_info() is None
+
+    def test_get_footer(self):
+        i = Invoice()
+        assert i.get_footer() is None
+
+    def test_export_file(self, invoice):
+        basedir = "/tmp"
+        if invoice.logo:
+            assert os.path.exists(invoice.logo) is True
+        filename = invoice.export_file(basedir)
+        assert os.path.exists(filename) is True
+        stats = os.stat(filename)
+        # the file has to contain something
+        assert stats.st_size > 10
+        os.unlink(filename)
+
+    def test_export_bytes(self, invoice):
+        res = invoice.export_bytes()
+        assert isinstance(res, bytes)
+
+    def test_export_attachment(self, invoice):
+        attachment = invoice.export_attachment()
+        assert isinstance(attachment, MIMEApplication)
+
+    def test_export_response(self, invoice):
+        response = invoice.export_response()
+        assert isinstance(response, HttpResponse)
+
+
+class TestInvoiceItem:
+    def test_str(self):
+        item = InvoiceItem(description="Test Item")
+        assert str(item) == "Test Item"
+
+    def test_total(self):
+        item = InvoiceItem(unit_price="10.55", quantity=2)
+        assert item.total == Decimal("21.10")

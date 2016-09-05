@@ -41,6 +41,16 @@ ExportClass = load_class(
 )
 
 
+def generate_invoice_number():
+    while True:
+        number = "".join(
+            random.sample(string.ascii_letters + string.digits, 8)
+        )
+        if not Invoice.objects.filter(uid=number).exists():
+            break
+    return number
+
+
 @python_2_unicode_compatible
 class Address(models.Model):
     """Address to be printed to Invoice - the method `as_text` is mandatory."""
@@ -180,18 +190,12 @@ class Invoice(models.Model):
         return smart_text("{0} {1} {2}").format(
             self.get_state_display(),
             _("nr."),
-            self.id
+            self.pk
         )
 
     def save(self, *args, **kwargs):
         if not self.uid:
-            self.uid = "".join(random.sample(
-                string.ascii_letters + string.digits, 8)
-            )
-            while self.__class__.objects.filter(uid=self.uid).exists():
-                self.uid = "".join(
-                    random.sample(string.ascii_letters + string.digits, 8)
-                )
+            self.uid = generate_invoice_number()
         return super(Invoice, self).save(*args, **kwargs)
 
     def set_paid(self):
@@ -217,18 +221,19 @@ class Invoice(models.Model):
     @cached_property
     def total(self):
         """Compute total price using all items as decimal number."""
-        x = Decimal('0.00')
+        total = Decimal('0.00')
         for item in self.items.all():
-            x = x + item.total
-        return x
+            total = total + item.total
+        return total
 
     @property
     def filename(self):
         """Deduce unique filename for export."""
         return "{0}-{1}.{2}".format(
             self.get_state_display(),
-            self.id,
-            self.export.get_content_type().rsplit("/", 2)[1])
+            self.pk,
+            self.export.get_content_type().rsplit("/", 2)[1]
+        )
 
     def get_info(self):
         """Return (multiline) string with info printed below contractor."""
@@ -282,10 +287,10 @@ class InvoiceItem(models.Model):
         verbose_name = lazy_("invoice item")
         ordering = ['unit_price']
 
-    @property
-    def total(self):
-        total = Decimal(str(self.unit_price * self.quantity))
-        return total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-
     def __str__(self):
         return self.description
+
+    @property
+    def total(self):
+        total = Decimal(str(float(self.unit_price) * float(self.quantity)))
+        return total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
