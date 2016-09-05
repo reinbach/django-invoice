@@ -4,7 +4,9 @@ import datetime
 import os
 import pytest
 
-from invoice.models import Address, BankAccount, Invoice
+from decimal import Decimal
+from django.utils.timezone import now
+from invoice.models import Address, BankAccount, Invoice, InvoiceItem
 
 
 class TestAddress:
@@ -54,7 +56,7 @@ class TestBankAccount:
 
 
 @pytest.mark.django_db
-class TestInvoice:
+class TestInvoiceManager:
     def test_get_due_paid(self, invoice):
         assert Invoice.objects.get_due().count() == 1
 
@@ -62,7 +64,7 @@ class TestInvoice:
         assert Invoice.objects.get_due().count() == 0
 
     def test_get_due_date(self, invoice):
-        today = datetime.date.today()
+        today = now().date()
         yesterday = today - datetime.timedelta(days=1)
         tomorrow = today + datetime.timedelta(days=1)
 
@@ -74,6 +76,16 @@ class TestInvoice:
         invoice.save()
         assert Invoice.objects.get_due().count() == 0
 
+
+@pytest.mark.django_db
+class TestInvoice:
+    def test_set_paid(self, invoice):
+        assert invoice.state == Invoice.STATE_PROFORMA
+        assert invoice.date_paid is None
+        invoice.set_paid()
+        assert invoice.state == Invoice.STATE_INVOICE
+        assert invoice.date_paid is not None
+
     def test_generate_file(self, invoice):
         basedir = "/tmp"
         if invoice.logo:
@@ -84,3 +96,27 @@ class TestInvoice:
         # the file has to contain something
         assert stats.st_size > 10
         os.unlink(filename)
+
+    def test_add_item(self, invoice):
+        item_count = InvoiceItem.objects.all().count()
+        assert item_count == 4
+        item = invoice.add_item("test", "10.00")
+        assert isinstance(item, InvoiceItem)
+        InvoiceItem.objects.all().count() == 5
+        assert item.description == "test"
+        assert item.unit_price == "10.00"
+        assert item.quantity == 1
+
+    def test_add_item_price_none(self, invoice):
+        item_count = InvoiceItem.objects.all().count()
+        assert item_count == 4
+        item = invoice.add_item("test", None)
+        assert item is None
+        InvoiceItem.objects.all().count() == item_count
+
+    def test_add_item_description_none(self, invoice):
+        item_count = InvoiceItem.objects.all().count()
+        assert item_count == 4
+        item = invoice.add_item(None, "10.00")
+        assert item is None
+        InvoiceItem.objects.all().count() == item_count

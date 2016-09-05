@@ -138,7 +138,6 @@ class Invoice(models.Model):
         null=True,
         blank=True
     )
-
     subscriber = models.ForeignKey(AddressModel, related_name='+')
     subscriber_shipping = models.ForeignKey(
         AddressModel,
@@ -157,11 +156,9 @@ class Invoice(models.Model):
         choices=INVOICE_STATES,
         default=STATE_PROFORMA
     )
-
     date_issuance = models.DateField(auto_now_add=True)
     date_due = models.DateField(default=in_14_days)
     date_paid = models.DateField(blank=True, null=True)
-
     created = models.DateTimeField(
         auto_now_add=True,
         verbose_name=_('Date added')
@@ -203,9 +200,15 @@ class Invoice(models.Model):
         self.save()
 
     def add_item(self, description, price, quantity=1):
-        if description is not None and price is not None:
-            InvoiceItem.objects.create(invoice=self, description=description,
-                                       unit_price=price, quantity=quantity)
+        if description is None or price is None:
+            return None
+
+        return InvoiceItem.objects.create(
+            invoice=self,
+            description=description,
+            unit_price=price,
+            quantity=quantity
+        )
 
     def total_amount(self):
         """Return total as formated string."""
