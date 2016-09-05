@@ -7,7 +7,7 @@ from invoice.models import Invoice, InvoiceItem, Address, BankAccount
 
 
 @pytest.fixture
-def invoice():
+def invoice(scrope="session"):
     contractor, created = Address.objects.get_or_create(
         name='Simon Luijk',
         street=u'Rydsvägen 242',
